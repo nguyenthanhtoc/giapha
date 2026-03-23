@@ -15,23 +15,20 @@ export default function FamilyTree() {
   const isFirstLoad = useRef(true);
 
   useEffect(() => {
-    const loadOverrides = async () => {
+    const loadData = async () => {
       try {
-        const res = await fetch('/api/overrides');
-        const overrides = await res.json();
-        const merged = familyData.map(node => {
-          if (overrides[node.id]) {
-            return { ...node, ...overrides[node.id] };
-          }
-          return node;
-        });
-        setMergedData(merged);
+        const res = await fetch('/api/members');
+        const data = await res.json();
+        // Since we fetch everything from DB, no need to merge with local json
+        setMergedData(data);
       } catch (e) {
+        console.error('Error loading members:', e);
+        // Fallback to local json for development/fallback if exists
         setMergedData(familyData);
       }
     };
 
-    loadOverrides();
+    loadData();
 
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -248,7 +245,7 @@ export default function FamilyTree() {
     };
 
     try {
-      const res = await fetch('/api/overrides', {
+      const res = await fetch('/api/members', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
