@@ -98,9 +98,9 @@ export default function FamilyTree() {
       const xTarget = d.target.x;
       const yTarget = d.target.y;
       return `M${xSource},${ySource} ` +
-             `V${(ySource + yTarget) / 2} ` +
-             `H${xTarget} ` +
-             `V${yTarget}`;
+        `V${(ySource + yTarget) / 2} ` +
+        `H${xTarget} ` +
+        `V${yTarget}`;
     };
 
     g.append('g')
@@ -123,9 +123,9 @@ export default function FamilyTree() {
     const nodeHeight = 50;
     const spouseWidth = 130;
     const spouseHeight = 45;
-    const spouseOffset = 180; 
+    const spouseOffset = 180;
 
-    node.each(function(d) {
+    node.each(function (d) {
       const gNode = d3.select(this);
       const data = d.data;
       const personSpouses = spousesMap[data.id] || [];
@@ -164,7 +164,7 @@ export default function FamilyTree() {
         .text(data.name);
 
       if (data.role) {
-         nodeGroup.append('text')
+        nodeGroup.append('text')
           .attr('dy', 14)
           .attr('text-anchor', 'middle')
           .attr('fill', '#b91c1c') // Traditional Red
@@ -197,7 +197,7 @@ export default function FamilyTree() {
 
         const lineX1 = -spouseOffset + nodeWidth / 2;
         const lineX2 = -spouseWidth / 2;
-        
+
         spouseGroup.append('line')
           .attr('x1', lineX1)
           .attr('y1', 0)
@@ -239,7 +239,7 @@ export default function FamilyTree() {
 
   const handleSave = async () => {
     if (!selectedPerson) return;
-    
+
     const body = {
       [selectedPerson.id]: {
         name: editName,
@@ -253,11 +253,11 @@ export default function FamilyTree() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      
+
       if (res.ok) {
-        setMergedData(prev => prev.map(node => 
-          node.id === selectedPerson.id 
-            ? { ...node, name: editName, born: editBorn } 
+        setMergedData(prev => prev.map(node =>
+          node.id === selectedPerson.id
+            ? { ...node, name: editName, born: editBorn }
             : node
         ));
         setSelectedPerson(prev => ({ ...prev, name: editName, born: editBorn }));
@@ -271,8 +271,12 @@ export default function FamilyTree() {
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full bg-[url('/bg_parchment.png')] bg-cover bg-center">
-      
+    <div
+      ref={containerRef}
+      className="relative w-full h-full bg-cover bg-center"
+      style={{ backgroundImage: "url('./bg_parchment.png')" }}
+    >
+
       {/* Decorative Header Banner */}
       <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10 select-none pointer-events-none">
         <div className="relative bg-[#fffbeb] border-2 border-amber-800 px-10 py-3 rounded-md shadow-2xl flex items-center justify-center min-w-[300px]">
@@ -288,7 +292,7 @@ export default function FamilyTree() {
 
       {selectedPerson && (
         <div className="absolute top-4 right-4 max-w-sm w-full bg-zinc-900/90 border border-zinc-800 rounded-xl p-6 backdrop-blur-md shadow-2xl text-white">
-          <button 
+          <button
             onClick={() => setSelectedPerson(null)}
             className="absolute top-2 right-2 text-zinc-400 hover:text-white"
           >
@@ -298,7 +302,7 @@ export default function FamilyTree() {
             <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold ${selectedPerson.gender === 'male' ? 'bg-blue-900/40 text-blue-400' : 'bg-pink-900/40 text-pink-400'}`}>
               {selectedPerson.name.charAt(0)}
             </div>
-            
+
             {isAdmin ? (
               <input
                 type="text"
@@ -310,9 +314,9 @@ export default function FamilyTree() {
             ) : (
               <h2 className="mt-4 text-xl font-bold text-zinc-100">{selectedPerson.name}</h2>
             )}
-            
+
             <p className="text-sm text-zinc-400 mt-1">{selectedPerson.role || 'Thành viên'}</p>
-            
+
             <div className="mt-4 w-full border-t border-zinc-800 pt-3 text-sm grid grid-cols-2 gap-2">
               <span className="text-zinc-500">Năm sinh:</span>
               {isAdmin ? (
@@ -331,7 +335,7 @@ export default function FamilyTree() {
             </div>
 
             {isAdmin && (
-              <button 
+              <button
                 onClick={handleSave}
                 className="mt-6 w-full bg-amber-700 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
               >
@@ -349,7 +353,7 @@ export default function FamilyTree() {
       )}
 
       <div className="absolute bottom-4 left-4 flex gap-2">
-        <button 
+        <button
           onClick={() => {
             const svg = d3.select(svgRef.current);
             svg.transition().call(d3.zoom().scaleBy, 1.3);
@@ -358,7 +362,7 @@ export default function FamilyTree() {
         >
           +
         </button>
-        <button 
+        <button
           onClick={() => {
             const svg = d3.select(svgRef.current);
             svg.transition().call(d3.zoom().scaleBy, 0.7);
