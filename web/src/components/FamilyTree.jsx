@@ -91,17 +91,17 @@ export default function FamilyTree() {
       style={{ backgroundImage: "url('./bg_parchment.png')" }}
     >
       {/* Decorative Header Banner */}
-      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10 select-none pointer-events-none">
-        <div className="relative bg-[#fffbeb] border-2 border-amber-800 px-10 py-3 rounded-md shadow-2xl flex items-center justify-center min-w-[300px]">
-          <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
-          <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
-          <h1 className="text-xl font-extrabold text-red-800 tracking-widest uppercase">
+      <div className="absolute top-4 sm:top-6 left-1/2 transform -translate-x-1/2 z-20 select-none pointer-events-none w-[90%] sm:w-auto">
+        <div className="relative bg-[#fffbeb] border border-amber-800 sm:border-2 px-4 sm:px-10 py-2 sm:py-3 rounded-md shadow-2xl flex items-center justify-center min-w-[200px] sm:min-w-[300px]">
+          <div className="absolute -left-1 sm:-left-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
+          <div className="absolute -right-1 sm:-right-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
+          <h1 className="text-lg sm:text-2xl font-extrabold text-red-800 tracking-wider sm:tracking-widest uppercase font-spectral text-center">
             Gia Phả Dòng Họ
           </h1>
         </div>
       </div>
 
-      <svg ref={svgRef} className="w-full h-full" />
+      <svg ref={svgRef} className="w-full h-full cursor-grab active:cursor-grabbing touch-none" />
 
       <InfoPanel
         selectedPerson={selectedPerson}
@@ -116,6 +116,7 @@ export default function FamilyTree() {
       <ZoomControls 
         onZoomIn={() => onZoom(1.3)} 
         onZoomOut={() => onZoom(0.7)} 
+        isPanelOpen={!!selectedPerson}
       />
     </div>
   );
