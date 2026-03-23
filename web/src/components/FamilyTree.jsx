@@ -14,20 +14,18 @@ export default function FamilyTree() {
   const [editBorn, setEditBorn] = useState('');
   const isFirstLoad = useRef(true);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const res = await fetch('/api/members');
-        const data = await res.json();
-        // Since we fetch everything from DB, no need to merge with local json
-        setMergedData(data);
-      } catch (e) {
-        console.error('Error loading members:', e);
-        // Fallback to local json for development/fallback if exists
-        setMergedData(familyData);
-      }
-    };
+  const loadData = async () => {
+    try {
+      const res = await fetch('/api/members');
+      const data = await res.json();
+      setMergedData(data);
+    } catch (e) {
+      console.error('Error loading members:', e);
+      setMergedData(familyData);
+    }
+  };
 
+  useEffect(() => {
     loadData();
 
     if (typeof window !== 'undefined') {
@@ -65,14 +63,30 @@ export default function FamilyTree() {
 
     const treeNodes = mergedData.filter(person => !person.spouseId);
 
+    // Add a virtual root to handle multiple roots (orphans)
+    const virtualRootId = 'VIRTUAL_ROOT_HIDDEN';
+    const dataWithVirtualRoot = [
+      { id: virtualRootId, parentId: null, name: 'VIRTUAL' },
+      ...treeNodes.map(node => ({
+        ...node,
+        parentId: node.parentId && treeNodes.some(n => n.id === node.parentId) 
+          ? node.parentId 
+          : virtualRootId
+      }))
+    ];
+
     const stratify = d3.stratify()
       .id(d => d.id)
       .parentId(d => d.parentId);
 
-    const root = stratify(treeNodes);
+    const root = stratify(dataWithVirtualRoot);
 
     const treeLayout = d3.tree().nodeSize([180, 160]);
     treeLayout(root);
+
+    // Filter out the virtual root for drawing
+    const links = root.links().filter(l => l.source.id !== virtualRootId);
+    const descendants = root.descendants().filter(d => d.id !== virtualRootId);
 
     const svg = d3.select(svgRef.current)
       .attr('width', '100%')
@@ -106,13 +120,13 @@ export default function FamilyTree() {
       .attr('stroke-opacity', 0.8)
       .attr('stroke-width', 2)
       .selectAll('path')
-      .data(root.links())
+      .data(links)
       .join('path')
       .attr('d', linkGenerator);
 
     const node = g.append('g')
       .selectAll('g')
-      .data(root.descendants())
+      .data(descendants)
       .join('g')
       .attr('transform', d => `translate(${d.x},${d.y})`);
 
@@ -252,18 +266,90 @@ export default function FamilyTree() {
       });
 
       if (res.ok) {
-        setMergedData(prev => prev.map(node =>
-          node.id === selectedPerson.id
-            ? { ...node, name: editName, born: editBorn }
-            : node
-        ));
-        setSelectedPerson(prev => ({ ...prev, name: editName, born: editBorn }));
+        await loadData();
         alert('Lưu thay đổi thành công!');
       } else {
         alert('Lỗi khi lưu.');
       }
     } catch (e) {
       alert('Lỗi kết nối API.');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedPerson) return;
+    if (!confirm(`Bạn có chắc muốn xóa ${selectedPerson.name}? Các con của người này sẽ không còn cha/mẹ.`)) return;
+
+    try {
+      const res = await fetch(`/api/members?id=${selectedPerson.id}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        setSelectedPerson(null);
+        await loadData();
+        alert('Đã xóa thành công!');
+      } else {
+        alert('Lỗi khi xóa.');
+      }
+    } catch (e) {
+      alert('Lỗi kết nối API.');
+    }
+  };
+
+  const handleAddChild = async () => {
+    if (!selectedPerson) return;
+    const name = prompt(`Nhập tên con của ${selectedPerson.name}:`);
+    if (!name) return;
+
+    const data = {
+      name,
+      gender: 'male', // Default male
+      parentId: selectedPerson.id,
+      role: 'Thế Hệ Tiếp'
+    };
+
+    try {
+      const res = await fetch('/api/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', data })
+      });
+
+      if (res.ok) {
+        await loadData();
+        alert('Thành công!');
+      }
+    } catch (e) {
+      alert('Lỗi.');
+    }
+  };
+
+  const handleAddSpouse = async () => {
+    if (!selectedPerson) return;
+    const name = prompt(`Nhập tên vợ/chồng của ${selectedPerson.name}:`);
+    if (!name) return;
+
+    const data = {
+      name,
+      gender: selectedPerson.gender === 'male' ? 'female' : 'male',
+      spouseId: selectedPerson.id,
+      role: 'Phu nhân/Phu quân'
+    };
+
+    try {
+      const res = await fetch('/api/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', data })
+      });
+
+      if (res.ok) {
+        await loadData();
+        alert('Thành công!');
+      }
+    } catch (e) {
+      alert('Lỗi.');
     }
   };
 
@@ -332,12 +418,34 @@ export default function FamilyTree() {
             </div>
 
             {isAdmin && (
-              <button
-                onClick={handleSave}
-                className="mt-6 w-full bg-amber-700 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
-              >
-                Lưu Thay Đổi
-              </button>
+              <div className="mt-6 w-full space-y-2">
+                <button
+                  onClick={handleSave}
+                  className="w-full bg-amber-700 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                >
+                  Lưu Thay Đổi
+                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={handleAddChild}
+                    className="bg-zinc-800 hover:bg-zinc-700 text-amber-500 border border-amber-900/30 font-medium py-2 px-2 rounded-lg text-xs transition-colors"
+                  >
+                    + Thêm Con
+                  </button>
+                  <button
+                    onClick={handleAddSpouse}
+                    className="bg-zinc-800 hover:bg-zinc-700 text-amber-500 border border-amber-900/30 font-medium py-2 px-2 rounded-lg text-xs transition-colors"
+                  >
+                    + Thêm Vợ/Chồng
+                  </button>
+                </div>
+                <button
+                  onClick={handleDelete}
+                  className="w-full bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 font-semibold py-2 px-4 rounded-lg text-sm transition-colors"
+                >
+                  Xóa Thành Viên
+                </button>
+              </div>
             )}
 
             {selectedPerson.highlight && !isAdmin && (
