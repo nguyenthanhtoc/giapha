@@ -95,8 +95,13 @@ export default function FamilyTree() {
         <div className="relative bg-[#fffbeb] border border-amber-800 sm:border-2 px-4 sm:px-10 py-2 sm:py-3 rounded-md shadow-2xl flex items-center justify-center min-w-[200px] sm:min-w-[300px]">
           <div className="absolute -left-1 sm:-left-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
           <div className="absolute -right-1 sm:-right-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
-          <h1 className="text-lg sm:text-2xl font-extrabold text-red-800 tracking-wider sm:tracking-widest uppercase font-spectral text-center">
-            Gia Phả Dòng Họ
+          <h1 className="flex flex-col items-center text-center uppercase font-spectral select-none py-1">
+            <span className="text-xs sm:text-sm font-bold text-amber-900/80 tracking-[0.3em] mb-1">
+              Gia Phả Dòng Họ
+            </span>
+            <span className="text-xl sm:text-3xl font-black text-red-800 tracking-wider drop-shadow-sm">
+              Nguyễn Thanh Tộc
+            </span>
           </h1>
         </div>
       </div>
