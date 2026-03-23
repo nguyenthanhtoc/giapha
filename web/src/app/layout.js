@@ -20,9 +20,6 @@ const spectral = Spectral({
 export const metadata = {
   title: "Gia Phả Dòng Họ Nguyễn Thanh",
   description: "Trang tra cứu thông tin gia phả dòng họ Nguyễn Thanh",
-  icons: {
-    icon: "/favicon.jpg",
-  },
 };
 
 export default function RootLayout({ children }) {
