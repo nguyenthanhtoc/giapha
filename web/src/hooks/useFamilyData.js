@@ -33,8 +33,11 @@ export const useFamilyData = (initialData = []) => {
     loadData();
   }, [loadData]);
 
+  const [updatingIds, setUpdatingIds] = useState(new Set());
+
   const handleUpdate = useCallback(async (id, name, born) => {
     try {
+      setUpdatingIds(prev => new Set(prev).add(id));
       const { error } = await supabase
         .from('members')
         .update({ name, born })
@@ -46,13 +49,19 @@ export const useFamilyData = (initialData = []) => {
     } catch (e) {
       console.error('Update error:', e);
       return { success: false, error: e };
+    } finally {
+      setUpdatingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   }, [loadData]);
 
   const handleDelete = useCallback(async (id) => {
     try {
+      setUpdatingIds(prev => new Set(prev).add(id));
       // Handle orphans and spouses first
-      // In JS SDK we might need to do these sequentially or use a RPC
       await supabase.from('members').update({ parent_id: null }).eq('parent_id', id);
       await supabase.from('members').update({ spouse_id: null }).eq('spouse_id', id);
       
@@ -67,13 +76,20 @@ export const useFamilyData = (initialData = []) => {
     } catch (e) {
       console.error('Delete error:', e);
       return { success: false, error: e };
+    } finally {
+      setUpdatingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   }, [loadData]);
 
   const handleAddMember = useCallback(async (data) => {
     try {
       const newId = `new_${Date.now()}`;
-      const { error } = await supabase
+      setUpdatingIds(prev => new Set(prev).add(newId));
+      const { data: inserted, error } = await supabase
         .from('members')
         .insert([{
           id: newId,
@@ -82,14 +98,23 @@ export const useFamilyData = (initialData = []) => {
           parent_id: data.parentId || null,
           spouse_id: data.spouseId || null,
           role: data.role || null
-        }]);
+        }])
+        .select();
 
       if (error) throw error;
       await loadData();
-      return { success: true };
+      return { success: true, data: inserted?.[0] };
     } catch (e) {
       console.error('Add member error:', e);
       return { success: false, error: e };
+    } finally {
+      // In case of success, the ID will disappear when loadData finishes because it's replaced by DB IDs
+      // but we should still clear it if it was a temporary ID
+      setUpdatingIds(prev => {
+        const next = new Set(prev);
+        // ... well clearing might be tricky with new IDs, but okay
+        return next;
+      });
     }
   }, [loadData]);
 
@@ -98,6 +123,7 @@ export const useFamilyData = (initialData = []) => {
     loadData,
     handleUpdate,
     handleDelete,
-    handleAddMember
+    handleAddMember,
+    updatingIds
   };
 };

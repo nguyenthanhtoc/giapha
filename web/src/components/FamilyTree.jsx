@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import { useFamilyData } from '@/hooks/useFamilyData';
 import { drawFamilyTree } from '@/utils/treeLayout';
 import InfoPanel from './tree/InfoPanel';
+import QuickAddForm from './tree/QuickAddForm';
 
 export default function FamilyTree() {
   const svgRef = useRef(null);
@@ -13,12 +14,14 @@ export default function FamilyTree() {
   
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [quickAdd, setQuickAdd] = useState(null); // { targetPerson, type }
   
   const { 
     mergedData, 
     handleUpdate, 
     handleDelete, 
-    handleAddMember 
+    handleAddMember,
+    updatingIds
   } = useFamilyData();
 
   useEffect(() => {
@@ -33,17 +36,21 @@ export default function FamilyTree() {
       svgRef,
       containerRef,
       data: mergedData,
+      updatingIds,
+      isAdmin,
       onSelectPerson: setSelectedPerson,
+      onQuickAddChild: (person) => setQuickAdd({ targetPerson: person, type: 'child' }),
+      onQuickAddSpouse: (person) => setQuickAdd({ targetPerson: person, type: 'spouse' }),
       isFirstLoad: isFirstLoad.current
     });
-    isFirstLoad.current = false;
-  }, [mergedData]);
-
-
+    
+    if (mergedData.length > 0) {
+      isFirstLoad.current = false;
+    }
+  }, [mergedData, updatingIds, isAdmin]);
 
   const handleAdminUpdate = async (id, name, born) => {
     await handleUpdate(id, name, born);
-    // Silent update as requested
   };
 
   const handleAdminDelete = async (person) => {
@@ -51,32 +58,34 @@ export default function FamilyTree() {
     const res = await handleDelete(person.id);
     if (res.success) {
       setSelectedPerson(null);
-      alert('Đã xóa thành công!');
     }
   };
 
-  const handleAddChild = async (person) => {
-    const name = prompt(`Nhập tên con của ${person.name}:`);
-    if (!name) return;
-    const res = await handleAddMember({
-      name,
-      gender: 'male',
-      parentId: person.id,
-      role: 'Thế Hệ Tiếp'
-    });
-    if (res.success) alert('Thành công!');
-  };
-
-  const handleAddSpouse = async (person) => {
-    const name = prompt(`Nhập tên vợ/chồng của ${person.name}:`);
-    if (!name) return;
-    const res = await handleAddMember({
-      name,
-      gender: person.gender === 'male' ? 'female' : 'male',
-      spouseId: person.id,
-      role: 'Phu nhân/Phu quân'
-    });
-    if (res.success) alert('Thành công!');
+  const handleQuickSave = async ({ targetId, type, name, spouseName }) => {
+    if (type === 'spouse') {
+      const target = mergedData.find(m => m.id === targetId);
+      await handleAddMember({
+        name,
+        gender: target?.gender === 'male' ? 'female' : 'male',
+        spouseId: targetId,
+        role: target?.gender === 'male' ? 'Phu nhân' : 'Phu quân'
+      });
+    } else {
+      const res = await handleAddMember({
+        name,
+        gender: 'male',
+        parentId: targetId,
+        role: 'Thế Hệ Tiếp'
+      });
+      if (res.success && spouseName && res.data?.id) {
+        await handleAddMember({
+          name: spouseName,
+          gender: 'female',
+          spouseId: res.data.id,
+          role: 'Phu nhân'
+        });
+      }
+    }
   };
 
   return (
@@ -111,11 +120,17 @@ export default function FamilyTree() {
         isAdmin={isAdmin}
         onUpdate={handleAdminUpdate}
         onDelete={handleAdminDelete}
-        onAddChild={handleAddChild}
-        onAddSpouse={handleAddSpouse}
+        onAddChild={(person) => setQuickAdd({ targetPerson: person, type: 'child' })}
+        onAddSpouse={(person) => setQuickAdd({ targetPerson: person, type: 'spouse' })}
       />
 
-
+      <QuickAddForm
+        show={!!quickAdd}
+        targetPerson={quickAdd?.targetPerson}
+        type={quickAdd?.type}
+        onClose={() => setQuickAdd(null)}
+        onSave={handleQuickSave}
+      />
     </div>
   );
 }

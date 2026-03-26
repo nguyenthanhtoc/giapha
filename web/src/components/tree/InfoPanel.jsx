@@ -15,6 +15,7 @@ export default function InfoPanel({
   const [editName, setEditName] = useState('');
   const [editBorn, setEditBorn] = useState('');
   const [editSpouseName, setEditSpouseName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const spouse = allMembers?.find(m => m.spouseId === selectedPerson?.id);
 
@@ -28,19 +29,27 @@ export default function InfoPanel({
     } else {
       setEditSpouseName('');
     }
+    setIsSaving(false);
   }, [selectedPerson, spouse]);
 
   const handleSave = async () => {
-    // Update main person
-    await onUpdate(selectedPerson.id, editName, editBorn);
-    
-    // Update spouse if exists and name changed
-    if (spouse && editSpouseName !== spouse.name) {
-      await onUpdate(spouse.id, editSpouseName, spouse.born);
+    setIsSaving(true);
+    try {
+      // Update main person
+      await onUpdate(selectedPerson.id, editName, editBorn);
+      
+      // Update spouse if exists and name changed
+      if (spouse && editSpouseName !== spouse.name) {
+        await onUpdate(spouse.id, editSpouseName, spouse.born);
+      }
+      
+      // Auto-close popup
+      setSelectedPerson(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
     }
-    
-    // Auto-close or just stay? User didn't specify. 
-    // Usually stay is better if they want to see result.
   };
 
   if (!selectedPerson) return null;
@@ -123,9 +132,10 @@ export default function InfoPanel({
               <div className="w-full space-y-2">
                 <button
                   onClick={handleSave}
-                  className="w-full bg-red-800 hover:bg-red-700 active:scale-[0.98] text-amber-50 font-bold py-2.5 px-4 rounded-lg transition-all shadow-md uppercase tracking-wider text-[10px]"
+                  disabled={isSaving}
+                  className="w-full bg-red-800 hover:bg-red-700 disabled:bg-gray-400 active:scale-[0.98] text-amber-50 font-bold py-2.5 px-4 rounded-lg transition-all shadow-md uppercase tracking-wider text-[10px]"
                 >
-                  Cập Nhật Thông Tin
+                  {isSaving ? 'Đang cập nhật...' : 'Cập Nhật Thông Tin'}
                 </button>
                 <div className="grid grid-cols-2 gap-2">
                   <button
