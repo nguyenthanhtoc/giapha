@@ -18,6 +18,7 @@ export default function FamilyTree() {
   const [focusId, setFocusId] = useState(null);
   const [collapsedIds, setCollapsedIds] = useState(new Set());
   const [showDetails, setShowDetails] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(0.85);
   
   const { 
     mergedData, 
@@ -61,6 +62,7 @@ export default function FamilyTree() {
       onQuickAddChild: (person) => setQuickAdd({ targetPerson: person, type: 'child' }),
       onQuickAddSpouse: (person) => setQuickAdd({ targetPerson: person, type: 'spouse' }),
       onQuickDelete: handleAdminDelete,
+      onZoom: (k) => setZoomLevel(k),
       isFirstLoad: isFirstLoad.current
     });
     
@@ -154,6 +156,23 @@ export default function FamilyTree() {
         onClose={() => setQuickAdd(null)}
         onSave={handleQuickSave}
       />
+
+      {/* Zoom Indicator */}
+      <div className="absolute bottom-4 left-4 sm:bottom-8 sm:left-8 z-20 pointer-events-none select-none">
+        <div className="bg-[#fffbeb]/90 backdrop-blur-sm border border-amber-900/30 px-3 py-1.5 rounded shadow-lg flex items-center gap-3">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-tighter">Thu Phóng</span>
+            <span className="text-sm sm:text-base font-black text-amber-900 font-spectral">
+              {Math.round(zoomLevel * 100)}%
+            </span>
+          </div>
+          <div className="w-[1px] h-8 bg-amber-900/20" />
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-800 animate-pulse" />
+            <span className="text-[10px] font-bold text-red-900/80 uppercase tracking-widest">Live</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

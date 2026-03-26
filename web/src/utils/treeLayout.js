@@ -16,6 +16,7 @@ export const drawFamilyTree = ({
   onFocus,
   onToggleCollapse,
   onShowDetails,
+  onZoom,
   isFirstLoad 
 }) => {
   if (!svgRef.current || !containerRef.current || data.length === 0) return;
@@ -86,6 +87,7 @@ export const drawFamilyTree = ({
     .scaleExtent([0.1, 5])
     .on('zoom', (event) => {
       g.attr('transform', event.transform);
+      if (onZoom) onZoom(event.transform.k);
     });
 
   // Highlight logic
@@ -118,7 +120,7 @@ export const drawFamilyTree = ({
       if (isSelectedNew || focusId) {
         const isMobile = width < 640;
         const nodeBaseWidth = 160;
-        targetScale = isMobile ? (width / 6) / nodeBaseWidth : (width / 10) / nodeBaseWidth;
+        targetScale = isMobile ? (width / 5) / nodeBaseWidth : (width / 10) / nodeBaseWidth;
       } else {
         targetScale = 0.85;
       }
@@ -130,9 +132,11 @@ export const drawFamilyTree = ({
       if (isFirstLoad) {
         svgElement.call(zoom.transform, targetTransform);
         g.attr('transform', targetTransform);
+        if (onZoom) onZoom(targetScale);
       } else {
         svgElement.transition().duration(800).ease(d3.easeCubicInOut)
-          .call(zoom.transform, targetTransform);
+          .call(zoom.transform, targetTransform)
+          .on('end', () => { if (onZoom) onZoom(targetScale); });
       }
     }
   } else {
@@ -207,7 +211,7 @@ export const drawFamilyTree = ({
     const nameWidth = measureText(person.name, 14, 'bold');
     const spouseWidths = personSpouses.map(s => measureText(`(${s.name})`, 11, '500'));
     const maxTextWidth = Math.max(nameWidth, ...spouseWidths, 0);
-    const nodeWidth = Math.max(defaultNodeWidth, maxTextWidth + 16); // 8px total padding
+    const nodeWidth = Math.max(defaultNodeWidth, maxTextWidth + 8); // 4px padding on each side
 
     const isUpdating = updatingIds.has(person.id) || personSpouses.some(s => updatingIds.has(s.id));
 
