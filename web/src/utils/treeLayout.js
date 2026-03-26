@@ -83,8 +83,7 @@ export const drawFamilyTree = ({
     .join('g')
     .attr('transform', d => `translate(${d.x},${d.y})`);
 
-  const nodeWidth = 160, nodeHeight = 50;
-  const spouseWidth = 130, spouseHeight = 45, spouseOffset = 180;
+  const nodeWidth = 160, nodeHeight = 65;
 
   node.each(function (d) {
     const gNode = d3.select(this);
@@ -102,48 +101,32 @@ export const drawFamilyTree = ({
     const filterId = `shadow-${person.id}`;
     svgElement.append('defs').append('filter').attr('id', filterId)
       .append('feDropShadow').attr('dx', 0).attr('dy', 4).attr('stdDeviation', 4)
-      .attr('flood-color', '#000000').attr('flood-opacity', 0.3);
+      .attr('flood-color', '#000000').attr('flood-opacity', 0.2);
 
     nodeGroup.append('rect')
       .attr('x', -nodeWidth / 2).attr('y', -nodeHeight / 2)
       .attr('width', nodeWidth).attr('height', nodeHeight)
-      .attr('rx', 2).attr('fill', '#fffbeb').attr('stroke', '#b45309').attr('stroke-width', 1.5)
+      .attr('rx', 3).attr('fill', person.gender === 'male' ? '#fffbeb' : '#fdf2f8')
+      .attr('stroke', person.gender === 'male' ? '#b45309' : '#be185d').attr('stroke-width', 1.5)
       .attr('filter', `url(#${filterId})`);
 
+    // Main person name
     nodeGroup.append('text')
-      .attr('dy', person.role ? -4 : 4).attr('text-anchor', 'middle')
-      .attr('fill', '#1c1917').attr('font-size', '13px').attr('font-weight', 'bold')
+      .attr('dy', personSpouses.length > 0 ? -8 : 5)
+      .attr('text-anchor', 'middle')
+      .attr('fill', '#1c1917').attr('font-size', '14px').attr('font-weight', 'bold')
       .text(person.name);
 
-    if (person.role) {
+    // Spouse names inside the node
+    if (personSpouses.length > 0) {
+      const spouseLabel = personSpouses[0].gender === 'female' ? 'Vợ' : 'Chồng';
+      const spouseNames = personSpouses.map(s => s.name).join(', ');
       nodeGroup.append('text')
-        .attr('dy', 14).attr('text-anchor', 'middle')
-        .attr('fill', '#b91c1c').attr('font-size', '10px').attr('font-weight', '500')
-        .text(person.role);
+        .attr('dy', 14)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#4b5563').attr('font-size', '11px').attr('font-weight', '500')
+        .text(`(${spouseLabel}: ${spouseNames})`);
     }
-
-    personSpouses.forEach((spouse, index) => {
-      const spouseGroup = gNode.append('g')
-        .attr('class', 'spouse-node')
-        .attr('transform', `translate(${spouseOffset * (index + 1)}, 0)`)
-        .on('click', (e) => { e.stopPropagation(); onSelectPerson(spouse); })
-        .style('cursor', 'pointer');
-
-      spouseGroup.append('line')
-        .attr('x1', -spouseOffset + nodeWidth / 2).attr('y1', 0)
-        .attr('x2', -spouseWidth / 2).attr('y2', 0)
-        .attr('stroke', '#be9154').attr('stroke-width', 1.2).attr('stroke-dasharray', '3, 2');
-
-      spouseGroup.append('rect')
-        .attr('x', -spouseWidth / 2).attr('y', -spouseHeight / 2)
-        .attr('width', spouseWidth).attr('height', spouseHeight)
-        .attr('rx', 2).attr('fill', '#fffbeb').attr('stroke', '#b45309').attr('stroke-width', 1);
-
-      spouseGroup.append('text')
-        .attr('dy', 4).attr('text-anchor', 'middle')
-        .attr('fill', '#1c1917').attr('font-size', '12px').attr('font-weight', '500')
-        .text(spouse.name);
-    });
   });
 
   if (isFirstLoad) {
