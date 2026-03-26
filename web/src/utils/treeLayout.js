@@ -74,7 +74,7 @@ export const drawFamilyTree = ({
     });
   }
 
-  const treeLayout = d3.tree().nodeSize([220, 180]);
+  const treeLayout = d3.tree().nodeSize([250, 180]);
   treeLayout(root);
 
   const links = root.links().filter(l => l.source.id !== virtualRootId);
@@ -148,12 +148,31 @@ export const drawFamilyTree = ({
     .join('g')
     .attr('transform', d => `translate(${d.x},${d.y})`);
 
-  const nodeWidth = 160, nodeHeight = 65;
+  const defaultNodeWidth = 160, nodeHeight = 65;
+
+  // Measurement helper
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const measureText = (text, size, weight) => {
+    try {
+      ctx.font = `${weight} ${size}px sans-serif`;
+      return ctx.measureText(text).width;
+    } catch (e) {
+      return text.length * (weight === 'bold' ? 8.5 : 7);
+    }
+  };
 
   node.each(function (d) {
     const gNode = d3.select(this);
     const person = d.data;
     const personSpouses = spousesMap[person.id] || [];
+
+    // Dynamic width calculation with 8px padding
+    const nameWidth = measureText(person.name, 14, 'bold');
+    const spouseWidths = personSpouses.map(s => measureText(`(${s.name})`, 11, '500'));
+    const maxTextWidth = Math.max(nameWidth, ...spouseWidths, 0);
+    const nodeWidth = Math.max(defaultNodeWidth, maxTextWidth + 16); // 8px total padding
+
     const isUpdating = updatingIds.has(person.id) || personSpouses.some(s => updatingIds.has(s.id));
 
     const isSelected = person.id === selectedId;
@@ -306,18 +325,29 @@ export const drawFamilyTree = ({
         deleteBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').attr('font-weight', 'bold').text('✕');
     }
 
+    // Calculate vertical positions for centering
+    const totalSpouses = personSpouses.length;
+    let nameDy;
+    
+    if (totalSpouses === 0) {
+      nameDy = 5;
+    } else {
+      // Centering logic: First line offset depends on total spouses
+      nameDy = -7 - 6 * (totalSpouses - 1);
+    }
+
     // Main person name
     nodeGroup.append('text')
-      .attr('dy', personSpouses.length > 0 ? -12 : 5)
+      .attr('dy', nameDy)
       .attr('text-anchor', 'middle')
       .attr('fill', '#1c1917').attr('font-size', '14px').attr('font-weight', 'bold')
       .text(person.name);
 
     // Spouse names (multi-line)
-    if (personSpouses.length > 0) {
+    if (totalSpouses > 0) {
       personSpouses.forEach((s, i) => {
         nodeGroup.append('text')
-          .attr('dy', 2 + i * 12)
+          .attr('dy', nameDy + 14 + i * 12)
           .attr('text-anchor', 'middle')
           .attr('fill', '#4b5563').attr('font-size', '11px').attr('font-weight', '500')
           .text(`(${s.name})`);
