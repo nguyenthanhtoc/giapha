@@ -78,8 +78,35 @@ export const drawFamilyTree = ({
   const treeLayout = d3.tree().nodeSize([170, 200]); // Reduced horizontal spacing to ~10px gap (160 node + 10 gap)
   treeLayout(root);
 
+  const generationLabels = [
+    "Đệ Thập Nhất Thế Tổ",
+    "Đệ Thập Nhị Thế Tổ",
+    "Đệ Thập Tam Thế Tổ",
+    "Đệ Thập Tứ Thế",
+    "Đệ Thập Ngũ Thế",
+    "Đệ Thập Lục Thế",
+    "Đệ Thập Thất Thế",
+    "Đệ Thập Bát Thế",
+    "Đệ Thập Cửu Thế"
+  ];
+
   const links = root.links().filter(l => l.source.id !== virtualRootId);
   const descendants = root.descendants().filter(d => d.id !== virtualRootId);
+
+  // Add generation info to nodes
+  descendants.forEach(d => {
+    if (d.depth > 0) {
+      const genIndex = d.depth - 1;
+      const genLabel = generationLabels[genIndex] || `Thế Hệ ${d.depth + 10}`;
+      d.data.generation = genLabel;
+      
+      // Also apply to spouses
+      const personSpouses = spousesMap[d.data.id] || [];
+      personSpouses.forEach(s => {
+        s.generation = genLabel;
+      });
+    }
+  });
 
   const g = svgElement.append('g').attr('class', 'tree-viewport');
 

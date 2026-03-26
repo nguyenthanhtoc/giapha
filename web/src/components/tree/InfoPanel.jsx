@@ -117,7 +117,7 @@ export default function InfoPanel({
               </div>
             )}
 
-            <p className="text-[10px] text-amber-800 font-bold uppercase tracking-[0.2em] mt-3 mb-4 border-b border-amber-800/10 pb-0.5">{selectedPerson.role || 'Thành viên'}</p>
+            <p className="text-[10px] text-amber-800 font-bold uppercase tracking-[0.2em] mt-3 mb-4 border-b border-amber-800/10 pb-0.5">{selectedPerson.generation || selectedPerson.role || 'Thành viên'}</p>
 
             <div className="w-full grid grid-cols-2 gap-4 text-center mb-4">
               <div className="flex flex-col">
