@@ -5,7 +5,6 @@ import * as d3 from 'd3';
 import { useFamilyData } from '@/hooks/useFamilyData';
 import { drawFamilyTree } from '@/utils/treeLayout';
 import InfoPanel from './tree/InfoPanel';
-import ZoomControls from './tree/ZoomControls';
 
 export default function FamilyTree() {
   const svgRef = useRef(null);
@@ -40,11 +39,7 @@ export default function FamilyTree() {
     isFirstLoad.current = false;
   }, [mergedData]);
 
-  const onZoom = (scale) => {
-    if (!svgRef.current) return;
-    const svg = d3.select(svgRef.current);
-    svg.transition().call(d3.zoom().scaleBy, scale);
-  };
+
 
   const handleAdminUpdate = async (id, name, born) => {
     const res = await handleUpdate(id, name, born);
@@ -89,6 +84,7 @@ export default function FamilyTree() {
       ref={containerRef}
       className="relative w-full h-full bg-cover bg-center"
       style={{ backgroundImage: "url('./bg_parchment.png')" }}
+      onClick={() => setSelectedPerson(null)}
     >
       {/* Decorative Header Banner */}
       <div className="absolute top-4 sm:top-6 left-1/2 transform -translate-x-1/2 z-20 select-none pointer-events-none w-[90%] sm:w-auto">
@@ -118,11 +114,7 @@ export default function FamilyTree() {
         onAddSpouse={handleAddSpouse}
       />
 
-      <ZoomControls 
-        onZoomIn={() => onZoom(1.3)} 
-        onZoomOut={() => onZoom(0.7)} 
-        isPanelOpen={!!selectedPerson}
-      />
+
     </div>
   );
 }

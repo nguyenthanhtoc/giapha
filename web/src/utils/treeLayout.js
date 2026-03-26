@@ -57,6 +57,9 @@ export const drawFamilyTree = ({
     });
 
   svgElement.call(zoom);
+  
+  // Deselect on background click
+  svgElement.on('click', () => onSelectPerson(null));
 
   const linkGenerator = d => {
     const xSource = d.source.x, ySource = d.source.y;
@@ -90,7 +93,10 @@ export const drawFamilyTree = ({
 
     const nodeGroup = gNode.append('g')
       .attr('class', 'person-node')
-      .on('click', () => onSelectPerson(person))
+      .on('click', (event) => {
+        event.stopPropagation();
+        onSelectPerson(person);
+      })
       .style('cursor', 'pointer');
 
     const filterId = `shadow-${person.id}`;
