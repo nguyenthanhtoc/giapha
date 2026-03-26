@@ -274,7 +274,8 @@ export const drawFamilyTree = ({
     }
 
     // Special pattern for root node
-    const isSpecialRoot = person.name === 'Nguyễn Thanh Dung';
+    const isRootNode = d.depth === 1;
+    const isSpecialRoot = person.name === 'Nguyễn Thanh Dung' || isRootNode;
     if (isSpecialRoot) {
       const pattern = defs.append('pattern')
         .attr('id', 'pattern-root')
@@ -428,23 +429,17 @@ export const drawFamilyTree = ({
         deleteBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').attr('font-weight', 'bold').text('✕');
     }
 
-    // Calculate vertical positions for centering
+    // Calculate vertical positions for centering (Name + Spouses)
     const totalSpouses = personSpouses.length;
-    let nameDy;
+    const rowHeight = 14; 
+    const nameDy = (5 - (totalSpouses * rowHeight) / 2) * scaleFactor;
     
-    if (totalSpouses === 0) {
-      nameDy = 5;
-    } else {
-      // Centering logic: First line offset depends on total spouses
-      nameDy = -7 - 6 * (totalSpouses - 1);
-    }
-
     // Main person name
     nodeGroup.append('text')
-      .attr('dy', nameDy * scaleFactor)
+      .attr('dy', nameDy)
       .attr('text-anchor', 'middle')
       .attr('fill', isSpecialRoot ? '#78350f' : '#1c1917')
-      .attr('font-size', isSpecialRoot ? '22px' : '14px')
+      .attr('font-size', isSpecialRoot ? '28px' : '14px')
       .attr('font-weight', 'black')
       .attr('class', isSpecialRoot ? 'font-spectral' : '')
       .text(person.name);
@@ -453,9 +448,11 @@ export const drawFamilyTree = ({
     if (totalSpouses > 0) {
       personSpouses.forEach((s, i) => {
         nodeGroup.append('text')
-          .attr('dy', nameDy + 14 + i * 12)
+          .attr('dy', nameDy + (i + 1) * rowHeight * scaleFactor)
           .attr('text-anchor', 'middle')
-          .attr('fill', '#4b5563').attr('font-size', '11px').attr('font-weight', '500')
+          .attr('fill', '#4b5563')
+          .attr('font-size', isSpecialRoot ? '22px' : '11px')
+          .attr('font-weight', '500')
           .text(`(${s.name})`);
       });
     }
