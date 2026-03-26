@@ -344,6 +344,27 @@ export const drawFamilyTree = ({
           .attr('font-weight', 'bold')
           .text('i');
 
+        // Go to Parent Button (Top Left)
+        if (person.parentId && person.parentId !== virtualRootId) {
+            const parentBtn = nodeGroup.append('g')
+              .attr('class', 'view-action-btn')
+              .attr('transform', `translate(${-finalNodeWidth / 2 + 15}, ${-finalNodeHeight / 2 - 12})`)
+              .style('cursor', 'pointer')
+              .on('click', (e) => {
+                  e.stopPropagation();
+                  onFocus(person.parentId);
+              });
+            
+            parentBtn.append('circle').attr('r', 10).attr('fill', '#64748b').attr('stroke', '#fff').attr('stroke-width', 1.5);
+            parentBtn.append('text')
+              .attr('dy', 4)
+              .attr('text-anchor', 'middle')
+              .attr('fill', '#fff')
+              .attr('font-size', '12px')
+              .attr('font-weight', 'bold')
+              .text('↑');
+        }
+
         // Collapse/Focus Up Button (Top Right)
         const isFocused = focusId === person.id;
         const focusBtn = nodeGroup.append('g')
