@@ -11,6 +11,10 @@ export const drawFamilyTree = ({
   onQuickAddSpouse,
   onQuickDelete,
   selectedPerson,
+  focusId,
+  collapsedIds,
+  onFocus,
+  onToggleCollapse,
   isFirstLoad 
 }) => {
   if (!svgRef.current || !containerRef.current || data.length === 0) return;
@@ -48,7 +52,27 @@ export const drawFamilyTree = ({
     .id(d => d.id)
     .parentId(d => d.parentId);
 
-  const root = stratify(dataWithVirtualRoot);
+  const rootFull = stratify(dataWithVirtualRoot);
+  let root = rootFull;
+
+  if (focusId) {
+    const focusNode = rootFull.descendants().find(d => d.id === focusId);
+    if (focusNode) {
+      root = focusNode;
+      // We don't detach it, d3.tree will just lay out the focusNode's subtree
+    }
+  }
+
+  // Apply collapses
+  if (collapsedIds && collapsedIds.size > 0) {
+    root.descendants().forEach(d => {
+      if (collapsedIds.has(d.id)) {
+        d._children = d.children;
+        d.children = null;
+      }
+    });
+  }
+
   const treeLayout = d3.tree().nodeSize([220, 180]);
   treeLayout(root);
 
@@ -175,6 +199,51 @@ export const drawFamilyTree = ({
       })
       .attr('stroke-width', isSelected ? 3.5 : (isRelated ? 2.5 : 1.5))
       .attr('filter', isSelected ? `url(#${selectedFilterId})` : (isUpdating ? null : `url(#${filterId})`));
+
+    // Collapse Buttons for EVERYONE when selected
+    if (isSelected && !isUpdating) {
+        // Collapse/Focus Up Button (Top Center-Right)
+        const isFocused = focusId === person.id;
+        const focusBtn = nodeGroup.append('g')
+          .attr('class', 'view-action-btn')
+          .attr('transform', `translate(${nodeWidth / 2 - 15}, ${-nodeHeight / 2 - 12})`)
+          .style('cursor', 'pointer')
+          .on('click', (e) => {
+              e.stopPropagation();
+              onFocus(person.id);
+          });
+        
+        focusBtn.append('circle').attr('r', 10).attr('fill', isFocused ? '#1e40af' : '#64748b').attr('stroke', '#fff').attr('stroke-width', 1.5);
+        focusBtn.append('text')
+          .attr('dy', isFocused ? 3 : 4.5)
+          .attr('text-anchor', 'middle')
+          .attr('fill', '#fff')
+          .attr('font-size', '12px')
+          .attr('font-weight', 'bold')
+          .text(isFocused ? '↺' : '↑');
+        
+        // Add a tooltip-like text if hovered? (optional, for now skip to keep clean)
+
+        // Collapse/Expand Down Button (Bottom Center-Right)
+        const isCollapsed = collapsedIds.has(person.id);
+        const collapseBtn = nodeGroup.append('g')
+          .attr('class', 'view-action-btn')
+          .attr('transform', `translate(${nodeWidth / 2 - 15}, ${nodeHeight / 2 + 12})`)
+          .style('cursor', 'pointer')
+          .on('click', (e) => {
+              e.stopPropagation();
+              onToggleCollapse(person.id);
+          });
+        
+        collapseBtn.append('circle').attr('r', 10).attr('fill', isCollapsed ? '#15803d' : '#64748b').attr('stroke', '#fff').attr('stroke-width', 1.5);
+        collapseBtn.append('text')
+          .attr('dy', 4)
+          .attr('text-anchor', 'middle')
+          .attr('fill', '#fff')
+          .attr('font-size', '12px')
+          .attr('font-weight', 'bold')
+          .text(isCollapsed ? '+' : '−');
+    }
 
     if (isAdmin && !isUpdating) {
         // Child add button (Bottom)

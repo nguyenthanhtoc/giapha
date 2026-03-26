@@ -15,6 +15,8 @@ export default function FamilyTree() {
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [quickAdd, setQuickAdd] = useState(null); // { targetPerson, type }
+  const [focusId, setFocusId] = useState(null);
+  const [collapsedIds, setCollapsedIds] = useState(new Set());
   
   const { 
     mergedData, 
@@ -39,7 +41,18 @@ export default function FamilyTree() {
       updatingIds,
       isAdmin,
       selectedPerson,
+      focusId,
+      collapsedIds,
       onSelectPerson: setSelectedPerson,
+      onFocus: (id) => setFocusId(prev => prev === id ? null : id),
+      onToggleCollapse: (id) => {
+        setCollapsedIds(prev => {
+          const next = new Set(prev);
+          if (next.has(id)) next.delete(id);
+          else next.add(id);
+          return next;
+        });
+      },
       onQuickAddChild: (person) => setQuickAdd({ targetPerson: person, type: 'child' }),
       onQuickAddSpouse: (person) => setQuickAdd({ targetPerson: person, type: 'spouse' }),
       onQuickDelete: handleAdminDelete,
@@ -49,7 +62,7 @@ export default function FamilyTree() {
     if (mergedData.length > 0) {
       isFirstLoad.current = false;
     }
-  }, [mergedData, updatingIds, isAdmin, selectedPerson]);
+  }, [mergedData, updatingIds, isAdmin, selectedPerson, focusId, collapsedIds]);
 
   const handleAdminUpdate = async (id, name, born) => {
     await handleUpdate(id, name, born);
