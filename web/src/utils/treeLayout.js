@@ -136,19 +136,17 @@ export const drawFamilyTree = ({
         childBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '14px').attr('font-weight', 'bold').text('+');
 
         // Spouse add button (Right)
-        if (personSpouses.length === 0) {
-            const spouseBtn = nodeGroup.append('g')
-              .attr('class', 'quick-add-btn')
-              .attr('transform', `translate(${nodeWidth / 2 + 12}, 0)`)
-              .style('cursor', 'copy')
-              .on('click', (e) => {
-                  e.stopPropagation();
-                  onQuickAddSpouse(person);
-              });
-            
-            spouseBtn.append('circle').attr('r', 10).attr('fill', '#be123c').attr('stroke', '#fff').attr('stroke-width', 1.5);
-            spouseBtn.append('text').attr('dy', 4.5).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').text('♥');
-        }
+        const spouseBtn = nodeGroup.append('g')
+          .attr('class', 'quick-add-btn')
+          .attr('transform', `translate(${nodeWidth / 2 + 12}, 0)`)
+          .style('cursor', 'copy')
+          .on('click', (e) => {
+              e.stopPropagation();
+              onQuickAddSpouse(person);
+          });
+        
+        spouseBtn.append('circle').attr('r', 10).attr('fill', '#be123c').attr('stroke', '#fff').attr('stroke-width', 1.5);
+        spouseBtn.append('text').attr('dy', 4.5).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').text('♥');
 
         // Quick delete button (Top)
         const deleteBtn = nodeGroup.append('g')
