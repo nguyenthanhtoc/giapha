@@ -108,7 +108,7 @@ export default function InfoPanel({
             )}
             {!isAdmin && spouse && (
               <p className="text-sm font-bold text-amber-900/60 mt-1 italic">
-                 ({spouse.gender === 'female' ? 'Vợ' : 'Chồng'}: {spouse.name})
+                 ({spouse.name})
               </p>
             )}
 

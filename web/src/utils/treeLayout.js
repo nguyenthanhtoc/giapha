@@ -173,13 +173,12 @@ export const drawFamilyTree = ({
 
     // Spouse names
     if (personSpouses.length > 0) {
-      const spouseLabel = personSpouses[0].gender === 'female' ? 'Vợ' : 'Chồng';
       const spouseNames = personSpouses.map(s => s.name).join(', ');
       nodeGroup.append('text')
         .attr('dy', 14)
         .attr('text-anchor', 'middle')
         .attr('fill', '#4b5563').attr('font-size', '11px').attr('font-weight', '500')
-        .text(`(${spouseLabel}: ${spouseNames})`);
+        .text(`(${spouseNames})`);
     }
 
     if (isUpdating) {
