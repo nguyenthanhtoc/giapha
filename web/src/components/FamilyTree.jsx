@@ -41,6 +41,7 @@ export default function FamilyTree() {
       onSelectPerson: setSelectedPerson,
       onQuickAddChild: (person) => setQuickAdd({ targetPerson: person, type: 'child' }),
       onQuickAddSpouse: (person) => setQuickAdd({ targetPerson: person, type: 'spouse' }),
+      onQuickDelete: handleAdminDelete,
       isFirstLoad: isFirstLoad.current
     });
     

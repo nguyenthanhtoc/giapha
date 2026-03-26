@@ -86,8 +86,8 @@ export const useFamilyData = (initialData = []) => {
   }, [loadData]);
 
   const handleAddMember = useCallback(async (data) => {
+    let newId = `new_${Date.now()}`;
     try {
-      const newId = `new_${Date.now()}`;
       setUpdatingIds(prev => new Set(prev).add(newId));
       const { data: inserted, error } = await supabase
         .from('members')

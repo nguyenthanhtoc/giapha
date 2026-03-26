@@ -9,6 +9,7 @@ export const drawFamilyTree = ({
   onSelectPerson, 
   onQuickAddChild,
   onQuickAddSpouse,
+  onQuickDelete,
   isFirstLoad 
 }) => {
   if (!svgRef.current || !containerRef.current || data.length === 0) return;
@@ -148,6 +149,19 @@ export const drawFamilyTree = ({
             spouseBtn.append('circle').attr('r', 10).attr('fill', '#be123c').attr('stroke', '#fff').attr('stroke-width', 1.5);
             spouseBtn.append('text').attr('dy', 4.5).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').text('♥');
         }
+
+        // Quick delete button (Top)
+        const deleteBtn = nodeGroup.append('g')
+          .attr('class', 'quick-delete-btn')
+          .attr('transform', `translate(0, ${-nodeHeight / 2 - 12})`)
+          .style('cursor', 'pointer')
+          .on('click', (e) => {
+              e.stopPropagation();
+              onQuickDelete(person);
+          });
+        
+        deleteBtn.append('circle').attr('r', 10).attr('fill', '#991b1b').attr('stroke', '#fff').attr('stroke-width', 1.5);
+        deleteBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').attr('font-weight', 'bold').text('✕');
     }
 
     // Main person name
