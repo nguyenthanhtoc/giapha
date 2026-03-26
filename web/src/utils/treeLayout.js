@@ -10,6 +10,7 @@ export const drawFamilyTree = ({
   onQuickAddChild,
   onQuickAddSpouse,
   onQuickDelete,
+  selectedPerson,
   isFirstLoad 
 }) => {
   if (!svgRef.current || !containerRef.current || data.length === 0) return;
@@ -62,6 +63,20 @@ export const drawFamilyTree = ({
       g.attr('transform', event.transform);
     });
 
+  // Highlight logic
+  const selectedId = selectedPerson?.id;
+  const relatedIds = new Set();
+  const selectedNode = selectedId ? descendants.find(d => d.id === selectedId) : null;
+  
+  if (selectedNode) {
+    selectedNode.ancestors().forEach(d => {
+      if (d.id !== virtualRootId) relatedIds.add(d.id);
+    });
+    selectedNode.descendants().forEach(d => {
+      relatedIds.add(d.id);
+    });
+  }
+
   if (!isFirstLoad) {
     const currentTransform = d3.zoomTransform(svgRef.current);
     g.attr('transform', currentTransform);
@@ -85,7 +100,22 @@ export const drawFamilyTree = ({
     .selectAll('path')
     .data(links)
     .join('path')
-    .attr('d', linkGenerator);
+    .attr('d', linkGenerator)
+    .attr('stroke', d => {
+        if (!selectedId) return '#a16207';
+        const isRelated = relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
+        return isRelated ? '#92400e' : '#d1d5db';
+    })
+    .attr('stroke-opacity', d => {
+        if (!selectedId) return 0.5;
+        const isRelated = relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
+        return isRelated ? 0.9 : 0.2;
+    })
+    .attr('stroke-width', d => {
+        if (!selectedId) return 1.5;
+        const isRelated = relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
+        return isRelated ? 3 : 1;
+    });
 
   const node = g.append('g')
     .selectAll('g')
@@ -101,8 +131,13 @@ export const drawFamilyTree = ({
     const personSpouses = spousesMap[person.id] || [];
     const isUpdating = updatingIds.has(person.id) || personSpouses.some(s => updatingIds.has(s.id));
 
+    const isSelected = person.id === selectedId;
+    const isRelated = selectedId && relatedIds.has(person.id);
+    const isFaded = selectedId && !isSelected && !isRelated;
+
     const nodeGroup = gNode.append('g')
-      .attr('class', `person-node ${isUpdating ? 'animate-pulse opacity-60' : ''}`)
+      .attr('class', `person-node ${isUpdating ? 'animate-pulse' : ''}`)
+      .style('opacity', isFaded ? 0.35 : 1)
       .on('click', (event) => {
         event.stopPropagation();
         onSelectPerson(person);
@@ -110,16 +145,36 @@ export const drawFamilyTree = ({
       .style('cursor', isUpdating ? 'wait' : 'pointer');
 
     const filterId = `shadow-${person.id}`;
-    svgElement.append('defs').append('filter').attr('id', filterId)
+    const selectedFilterId = `selected-glow-${person.id}`;
+    
+    const defs = svgElement.select('defs').node() ? svgElement.select('defs') : svgElement.append('defs');
+    
+    defs.append('filter').attr('id', filterId)
       .append('feDropShadow').attr('dx', 0).attr('dy', 4).attr('stdDeviation', 4)
       .attr('flood-color', '#000000').attr('flood-opacity', 0.15);
+
+    if (isSelected) {
+      defs.append('filter').attr('id', selectedFilterId)
+        .append('feDropShadow').attr('dx', 0).attr('dy', 0).attr('stdDeviation', 6)
+        .attr('flood-color', '#dc2626').attr('flood-opacity', 0.5);
+    }
 
     nodeGroup.append('rect')
       .attr('x', -nodeWidth / 2).attr('y', -nodeHeight / 2)
       .attr('width', nodeWidth).attr('height', nodeHeight)
-      .attr('rx', 4).attr('fill', person.gender === 'male' ? '#fffbeb' : '#fdf2f8')
-      .attr('stroke', person.gender === 'male' ? '#b45309' : '#be185d').attr('stroke-width', 1.5)
-      .attr('filter', isUpdating ? null : `url(#${filterId})`);
+      .attr('rx', 8)
+      .attr('fill', d => {
+          if (isSelected) return person.gender === 'male' ? '#fff7ed' : '#fff1f2';
+          if (isRelated) return person.gender === 'male' ? '#fefce8' : '#fff1f2';
+          return person.gender === 'male' ? '#fffbeb' : '#fdf2f8';
+      })
+      .attr('stroke', d => {
+          if (isSelected) return '#dc2626'; // Vibrant red
+          if (isRelated) return '#b45309'; // Warm amber
+          return person.gender === 'male' ? '#b45309' : '#be185d';
+      })
+      .attr('stroke-width', isSelected ? 3.5 : (isRelated ? 2.5 : 1.5))
+      .attr('filter', isSelected ? `url(#${selectedFilterId})` : (isUpdating ? null : `url(#${filterId})`));
 
     if (isAdmin && !isUpdating) {
         // Child add button (Bottom)

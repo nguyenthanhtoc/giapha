@@ -38,6 +38,7 @@ export default function FamilyTree() {
       data: mergedData,
       updatingIds,
       isAdmin,
+      selectedPerson,
       onSelectPerson: setSelectedPerson,
       onQuickAddChild: (person) => setQuickAdd({ targetPerson: person, type: 'child' }),
       onQuickAddSpouse: (person) => setQuickAdd({ targetPerson: person, type: 'spouse' }),
@@ -48,7 +49,7 @@ export default function FamilyTree() {
     if (mergedData.length > 0) {
       isFirstLoad.current = false;
     }
-  }, [mergedData, updatingIds, isAdmin]);
+  }, [mergedData, updatingIds, isAdmin, selectedPerson]);
 
   const handleAdminUpdate = async (id, name, born) => {
     await handleUpdate(id, name, born);
