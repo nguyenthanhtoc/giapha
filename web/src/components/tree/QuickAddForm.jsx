@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { capitalizeName } from '@/utils/stringUtils';
 
 export default function QuickAddForm({ show, targetPerson, type, onClose, onSave }) {
   const [name, setName] = useState('');
@@ -12,13 +13,20 @@ export default function QuickAddForm({ show, targetPerson, type, onClose, onSave
   const handleSave = async (e) => {
     e.preventDefault();
     if (!name.trim()) return;
+    
+    const capitalizedName = capitalizeName(name);
+    const capitalizedSpouseName = capitalizeName(spouseName);
+
+    setName(capitalizedName);
+    setSpouseName(capitalizedSpouseName);
+
     setIsSaving(true);
     try {
       await onSave({
         targetId: targetPerson.id,
         type,
-        name: name.trim(),
-        spouseName: spouseName.trim()
+        name: capitalizedName,
+        spouseName: capitalizedSpouseName
       });
       onClose();
     } catch (err) {

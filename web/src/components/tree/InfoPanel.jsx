@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { capitalizeName } from '@/utils/stringUtils';
 
 export default function InfoPanel({ 
   selectedPerson, 
@@ -33,14 +34,20 @@ export default function InfoPanel({
   }, [selectedPerson, spouse]);
 
   const handleSave = async () => {
+    const capitalizedName = capitalizeName(editName);
+    const capitalizedSpouseName = capitalizeName(editSpouseName);
+    
+    setEditName(capitalizedName);
+    setEditSpouseName(capitalizedSpouseName);
+
     setIsSaving(true);
     try {
       // Update main person
-      await onUpdate(selectedPerson.id, editName, editBorn);
+      await onUpdate(selectedPerson.id, capitalizedName, editBorn);
       
       // Update spouse if exists and name changed
-      if (spouse && editSpouseName !== spouse.name) {
-        await onUpdate(spouse.id, editSpouseName, spouse.born);
+      if (spouse && capitalizedSpouseName !== spouse.name) {
+        await onUpdate(spouse.id, capitalizedSpouseName, spouse.born);
       }
       
       // Auto-close popup

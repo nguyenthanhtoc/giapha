@@ -61,6 +61,12 @@ export const drawFamilyTree = ({
       g.attr('transform', event.transform);
     });
 
+  if (!isFirstLoad) {
+    const currentTransform = d3.zoomTransform(svgRef.current);
+    g.attr('transform', currentTransform);
+    svgElement.call(zoom.transform, currentTransform);
+  }
+
   svgElement.call(zoom);
   svgElement.on('click', () => onSelectPerson(null));
 

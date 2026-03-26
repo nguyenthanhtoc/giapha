@@ -108,11 +108,9 @@ export const useFamilyData = (initialData = []) => {
       console.error('Add member error:', e);
       return { success: false, error: e };
     } finally {
-      // In case of success, the ID will disappear when loadData finishes because it's replaced by DB IDs
-      // but we should still clear it if it was a temporary ID
       setUpdatingIds(prev => {
         const next = new Set(prev);
-        // ... well clearing might be tricky with new IDs, but okay
+        next.delete(newId);
         return next;
       });
     }
