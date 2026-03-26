@@ -352,10 +352,10 @@ export const drawFamilyTree = ({
               .style('cursor', 'pointer')
               .on('click', (e) => {
                   e.stopPropagation();
-                  onFocus(person.parentId);
+                  onSelectPerson(data.find(p => p.id === person.parentId));
               });
             
-            parentBtn.append('circle').attr('r', 10).attr('fill', '#64748b').attr('stroke', '#fff').attr('stroke-width', 1.5);
+            parentBtn.append('circle').attr('r', 10).attr('fill', '#4f46e5').attr('stroke', '#fff').attr('stroke-width', 1.5);
             parentBtn.append('text')
               .attr('dy', 4)
               .attr('text-anchor', 'middle')
