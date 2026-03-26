@@ -19,7 +19,7 @@ const spectral = Spectral({
 
 export const metadata = {
   title: "Nguyễn Thanh Tộc - Gia Phả Trực Tuyến",
-  description: "Trang tra cứu thông tin gia phả và kết nối dòng họ Nguyễn Thanh. Hệ thống lưu trữ và tra cứu thông tin qua 19 thế hệ.",
+  description: "Trang tra cứu thông tin gia phả và kết nối dòng họ Nguyễn Thanh. Hệ thống lưu trữ và tra cứu thông tin qua các thế hệ.",
   openGraph: {
     title: "Gia Phả Nguyễn Thanh Tộc",
     description: "Khám phá cội nguồn và tra cứu thông tin gia phả dòng họ qua các đời. Hệ thống lưu trữ gia phả trực tuyến hiện đại.",
@@ -30,7 +30,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Gia Phả Nguyễn Thanh Tộc",
-    description: "Hệ thống lưu trữ và tra cứu gia phả trực tuyến qua 19 thế hệ.",
+    description: "Hệ thống lưu trữ và tra cứu gia phả trực tuyến qua các thế hệ.",
     images: ["/icon.jpg"],
   },
 };

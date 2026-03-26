@@ -131,12 +131,16 @@ export default function InfoPanel({
                     placeholder="Năm sinh"
                   />
                 ) : (
-                  <span className="mt-0.5 text-red-900 text-base font-bold font-spectral">{selectedPerson.born || 'Chưa Có Thông Tin'}</span>
+                  <span className={`mt-0.5 font-spectral ${selectedPerson.born ? 'text-red-900 text-base font-bold' : 'text-red-900/40 text-[10px] font-medium italic'}`}>
+                    {selectedPerson.born || 'Chưa Có Thông Tin'}
+                  </span>
                 )}
               </div>
               <div className="flex flex-col">
                 <span className="text-amber-900/40 text-[9px] uppercase tracking-widest font-bold">Mất Năm</span>
-                <span className="mt-0.5 text-red-900 text-base font-bold font-spectral">{selectedPerson.death || 'Chưa Có Thông Tin'}</span>
+                <span className={`mt-0.5 font-spectral ${selectedPerson.death ? 'text-red-900 text-base font-bold' : 'text-red-900/40 text-[10px] font-medium italic'}`}>
+                  {selectedPerson.death || 'Chưa Có Thông Tin'}
+                </span>
               </div>
             </div>
 
