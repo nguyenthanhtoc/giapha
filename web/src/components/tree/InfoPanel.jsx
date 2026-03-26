@@ -18,7 +18,8 @@ export default function InfoPanel({
   const [editSpouseName, setEditSpouseName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const spouse = allMembers?.find(m => m.spouseId === selectedPerson?.id);
+  const spouses = allMembers?.filter(m => m.spouseId === selectedPerson?.id) || [];
+  const spouse = spouses[0]; // For legacy single-spouse edit logic if needed, but we should improve it
 
   useEffect(() => {
     if (selectedPerson) {
@@ -106,10 +107,14 @@ export default function InfoPanel({
                 />
               </div>
             )}
-            {!isAdmin && spouse && (
-              <p className="text-sm font-bold text-amber-900/60 mt-1 italic">
-                 ({spouse.name})
-              </p>
+            {!isAdmin && spouses.length > 0 && (
+              <div className="flex flex-col items-center gap-1 mt-1">
+                {spouses.map(s => (
+                  <p key={s.id} className="text-sm font-bold text-amber-900/60 italic">
+                    ({s.name})
+                  </p>
+                ))}
+              </div>
             )}
 
             <p className="text-[10px] text-amber-800 font-bold uppercase tracking-[0.2em] mt-3 mb-4 border-b border-amber-800/10 pb-0.5">{selectedPerson.role || 'Thành viên'}</p>

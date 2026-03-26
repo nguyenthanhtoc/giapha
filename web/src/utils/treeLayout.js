@@ -164,19 +164,20 @@ export const drawFamilyTree = ({
 
     // Main person name
     nodeGroup.append('text')
-      .attr('dy', personSpouses.length > 0 ? -8 : 5)
+      .attr('dy', personSpouses.length > 0 ? -12 : 5)
       .attr('text-anchor', 'middle')
       .attr('fill', '#1c1917').attr('font-size', '14px').attr('font-weight', 'bold')
       .text(person.name);
 
-    // Spouse names
+    // Spouse names (multi-line)
     if (personSpouses.length > 0) {
-      const spouseNames = personSpouses.map(s => s.name).join(', ');
-      nodeGroup.append('text')
-        .attr('dy', 14)
-        .attr('text-anchor', 'middle')
-        .attr('fill', '#4b5563').attr('font-size', '11px').attr('font-weight', '500')
-        .text(`(${spouseNames})`);
+      personSpouses.forEach((s, i) => {
+        nodeGroup.append('text')
+          .attr('dy', 2 + i * 12)
+          .attr('text-anchor', 'middle')
+          .attr('fill', '#4b5563').attr('font-size', '11px').attr('font-weight', '500')
+          .text(`(${s.name})`);
+      });
     }
 
     if (isUpdating) {
