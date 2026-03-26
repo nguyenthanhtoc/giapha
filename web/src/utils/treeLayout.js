@@ -74,7 +74,7 @@ export const drawFamilyTree = ({
     });
   }
 
-  const treeLayout = d3.tree().nodeSize([250, 180]);
+  const treeLayout = d3.tree().nodeSize([300, 200]); // Increased spacing for larger nodes
   treeLayout(root);
 
   const links = root.links().filter(l => l.source.id !== virtualRootId);
@@ -203,21 +203,53 @@ export const drawFamilyTree = ({
         .attr('flood-color', '#dc2626').attr('flood-opacity', 0.5);
     }
 
+    // Special pattern for root node
+    const isSpecialRoot = person.name === 'Nguyễn Thanh Dung';
+    if (isSpecialRoot) {
+      const pattern = defs.append('pattern')
+        .attr('id', 'pattern-root')
+        .attr('width', 40)
+        .attr('height', 40)
+        .attr('patternUnits', 'userSpaceOnUse');
+      
+      pattern.append('rect')
+        .attr('width', 40).attr('height', 40)
+        .attr('fill', '#fef3c7'); // Background of pattern
+
+      pattern.append('path')
+        .attr('d', 'M0 20 Q10 10 20 20 T40 20 M20 0 Q30 10 20 20 T20 40')
+        .attr('fill', 'none')
+        .attr('stroke', '#d97706')
+        .attr('stroke-width', 1.5)
+        .attr('opacity', 0.15);
+        
+      pattern.append('circle')
+        .attr('cx', 20).attr('cy', 20).attr('r', 3)
+        .attr('fill', '#d97706')
+        .attr('opacity', 0.2);
+    }
+
+    const scaleFactor = isSpecialRoot ? 1.75 : 1.0;
+    const finalNodeWidth = nodeWidth * scaleFactor;
+    const finalNodeHeight = nodeHeight * scaleFactor;
+
     nodeGroup.append('rect')
-      .attr('x', -nodeWidth / 2).attr('y', -nodeHeight / 2)
-      .attr('width', nodeWidth).attr('height', nodeHeight)
-      .attr('rx', 8)
+      .attr('x', -finalNodeWidth / 2).attr('y', -finalNodeHeight / 2)
+      .attr('width', finalNodeWidth).attr('height', finalNodeHeight)
+      .attr('rx', 8 * scaleFactor)
       .attr('fill', d => {
+          if (isSpecialRoot) return 'url(#pattern-root)';
           if (isSelected) return person.gender === 'male' ? '#fff7ed' : '#fff1f2';
           if (isRelated) return person.gender === 'male' ? '#fefce8' : '#fff1f2';
           return person.gender === 'male' ? '#fffbeb' : '#fdf2f8';
       })
       .attr('stroke', d => {
+          if (isSpecialRoot) return '#92400e'; // Root specific border
           if (isSelected) return '#dc2626'; // Vibrant red
           if (isRelated) return '#b45309'; // Warm amber
           return person.gender === 'male' ? '#b45309' : '#be185d';
       })
-      .attr('stroke-width', isSelected ? 3.5 : (isRelated ? 2.5 : 1.5))
+      .attr('stroke-width', isSpecialRoot ? 4 : (isSelected ? 3.5 : (isRelated ? 2.5 : 1.5)))
       .attr('filter', isSelected ? `url(#${selectedFilterId})` : (isUpdating ? null : `url(#${filterId})`));
 
     // Collapse/Info Buttons for EVERYONE when selected
@@ -225,7 +257,7 @@ export const drawFamilyTree = ({
         // Info Button (Top Left)
         const infoBtn = nodeGroup.append('g')
           .attr('class', 'view-action-btn')
-          .attr('transform', `translate(${-nodeWidth / 2 + 15}, ${-nodeHeight / 2 - 12})`)
+          .attr('transform', `translate(${-finalNodeWidth / 2 + 15}, ${-finalNodeHeight / 2 - 12})`)
           .style('cursor', 'pointer')
           .on('click', (e) => {
               e.stopPropagation();
@@ -245,7 +277,7 @@ export const drawFamilyTree = ({
         const isFocused = focusId === person.id;
         const focusBtn = nodeGroup.append('g')
           .attr('class', 'view-action-btn')
-          .attr('transform', `translate(${nodeWidth / 2 - 15}, ${-nodeHeight / 2 - 12})`)
+          .attr('transform', `translate(${finalNodeWidth / 2 - 15}, ${-finalNodeHeight / 2 - 12})`)
           .style('cursor', 'pointer')
           .on('click', (e) => {
               e.stopPropagation();
@@ -267,7 +299,7 @@ export const drawFamilyTree = ({
         const isCollapsed = collapsedIds.has(person.id);
         const collapseBtn = nodeGroup.append('g')
           .attr('class', 'view-action-btn')
-          .attr('transform', `translate(${nodeWidth / 2 - 15}, ${nodeHeight / 2 + 12})`)
+          .attr('transform', `translate(${finalNodeWidth / 2 - 15}, ${finalNodeHeight / 2 + 12})`)
           .style('cursor', 'pointer')
           .on('click', (e) => {
               e.stopPropagation();
@@ -288,7 +320,7 @@ export const drawFamilyTree = ({
         // Child add button (Bottom)
         const childBtn = nodeGroup.append('g')
           .attr('class', 'quick-add-btn')
-          .attr('transform', `translate(0, ${nodeHeight / 2 + 12})`)
+          .attr('transform', `translate(0, ${finalNodeHeight / 2 + 12})`)
           .style('cursor', 'copy')
           .on('click', (e) => {
               e.stopPropagation();
@@ -301,7 +333,7 @@ export const drawFamilyTree = ({
         // Spouse add button (Right)
         const spouseBtn = nodeGroup.append('g')
           .attr('class', 'quick-add-btn')
-          .attr('transform', `translate(${nodeWidth / 2 + 12}, 0)`)
+          .attr('transform', `translate(${finalNodeWidth / 2 + 12}, 0)`)
           .style('cursor', 'copy')
           .on('click', (e) => {
               e.stopPropagation();
@@ -314,7 +346,7 @@ export const drawFamilyTree = ({
         // Quick delete button (Top)
         const deleteBtn = nodeGroup.append('g')
           .attr('class', 'quick-delete-btn')
-          .attr('transform', `translate(0, ${-nodeHeight / 2 - 12})`)
+          .attr('transform', `translate(0, ${-finalNodeHeight / 2 - 12})`)
           .style('cursor', 'pointer')
           .on('click', (e) => {
               e.stopPropagation();
@@ -338,9 +370,12 @@ export const drawFamilyTree = ({
 
     // Main person name
     nodeGroup.append('text')
-      .attr('dy', nameDy)
+      .attr('dy', nameDy * scaleFactor)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#1c1917').attr('font-size', '14px').attr('font-weight', 'bold')
+      .attr('fill', isSpecialRoot ? '#78350f' : '#1c1917')
+      .attr('font-size', isSpecialRoot ? '22px' : '14px')
+      .attr('font-weight', 'black')
+      .attr('class', isSpecialRoot ? 'font-spectral' : '')
       .text(person.name);
 
     // Spouse names (multi-line)
