@@ -168,8 +168,8 @@ export default function FamilyTree() {
           </div>
           <div className="w-[1px] h-8 bg-amber-900/20" />
           <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-800 animate-pulse" />
-            <span className="text-[10px] font-bold text-red-900/80 uppercase tracking-widest">Live</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+            <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Live</span>
           </div>
         </div>
       </div>

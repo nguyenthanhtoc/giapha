@@ -141,19 +141,22 @@ export const drawFamilyTree = ({
   if (shouldResetView) {
     const targetNode = isSelectedNew ? selectedNode : (descendants.find(d => d.id === (focusId || descendants[0]?.id)) || descendants[0]);
     if (targetNode) {
-      // Calculate target scale based on user requirements: 
-      // 1 node = 1/6 width on mobile, 1/10 on PC
       let targetScale;
-      if (isSelectedNew || focusId) {
-        const isMobile = width < 640;
-        const nodeBaseWidth = 160;
-        targetScale = isMobile ? (width / 5) / nodeBaseWidth : (width / 10) / nodeBaseWidth;
+      let targetY = height / 2;
+
+      if (isFirstLoad) {
+          targetScale = 0.4;
+          targetY = height / 3; // Position at 1/3 from top
+      } else if (isSelectedNew || focusId) {
+          const isMobile = width < 640;
+          const nodeBaseWidth = 160;
+          targetScale = isMobile ? (width / 5) / nodeBaseWidth : (width / 10) / nodeBaseWidth;
       } else {
-        targetScale = 0.85;
+          targetScale = 0.85;
       }
 
       const targetTransform = d3.zoomIdentity
-        .translate(width / 2 - targetNode.x * targetScale, height / 2 - targetNode.y * targetScale)
+        .translate(width / 2 - targetNode.x * targetScale, targetY - targetNode.y * targetScale)
         .scale(targetScale);
       
       if (isFirstLoad) {
