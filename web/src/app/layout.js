@@ -23,9 +23,17 @@ export const metadata = {
   openGraph: {
     title: "Gia Phả Nguyễn Thanh Tộc",
     description: "Khám phá cội nguồn và tra cứu thông tin gia phả dòng họ qua các đời. Hệ thống lưu trữ gia phả trực tuyến hiện đại.",
-    images: ["/icon.jpg"],
+    images: [
+      {
+        url: "/icon.jpg",
+        width: 512,
+        height: 512,
+        alt: "Gia Phả Nguyễn Thanh Tộc",
+      },
+    ],
     locale: "vi_VN",
     type: "website",
+    siteName: "Gia Phả Nguyễn Thanh Tộc",
   },
   twitter: {
     card: "summary_large_image",
