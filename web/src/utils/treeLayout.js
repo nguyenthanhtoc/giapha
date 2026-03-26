@@ -102,11 +102,35 @@ export const drawFamilyTree = ({
     });
   }
 
-  if (!isFirstLoad) {
-    const currentTransform = d3.zoomTransform(svgRef.current);
-    g.attr('transform', currentTransform);
+  // Handle Zoom persistence and transitions
+  const currentTransform = d3.zoomTransform(svgRef.current);
+  const isFocusBack = !focusId && svgRef.current.__lastFocusId;
+  const isFocusNew = focusId && svgRef.current.__lastFocusId !== focusId;
+  const shouldResetView = isFirstLoad || isFocusNew || isFocusBack;
+
+  if (shouldResetView) {
+    const rootNode = descendants.find(d => d.id === (focusId || descendants[0]?.id)) || descendants[0];
+    if (rootNode) {
+      const initialScale = focusId ? 1.0 : 0.85;
+      const targetTransform = d3.zoomIdentity
+        .translate(width / 2 - rootNode.x * initialScale, height / 2 - rootNode.y * initialScale)
+        .scale(initialScale);
+      
+      if (isFirstLoad) {
+        svgElement.call(zoom.transform, targetTransform);
+        g.attr('transform', targetTransform);
+      } else {
+        svgElement.transition().duration(750).ease(d3.easeCubicOut)
+          .call(zoom.transform, targetTransform);
+      }
+    }
+  } else {
+    // Regular update (like collapse/expand), keep the camera stable
     svgElement.call(zoom.transform, currentTransform);
+    g.attr('transform', currentTransform);
   }
+  
+  svgRef.current.__lastFocusId = focusId;
 
   svgElement.call(zoom);
   svgElement.on('click', () => onSelectPerson(null));
@@ -291,7 +315,7 @@ export const drawFamilyTree = ({
           .attr('fill', '#fff')
           .attr('font-size', '12px')
           .attr('font-weight', 'bold')
-          .text(isFocused ? '−' : '+');
+          .text(isFocused ? '+' : '−');
         
         // Add a tooltip-like text if hovered? (optional, for now skip to keep clean)
 
@@ -398,17 +422,6 @@ export const drawFamilyTree = ({
         .attr('attributeName', 'opacity').attr('values', '0;1;0').attr('dur', '1s').attr('repeatCount', 'indefinite');
     }
   });
-
-  if (isFirstLoad) {
-    const rootNode = descendants.find(d => d.data.name === 'Nguyễn Thanh Dung') || descendants[0];
-    if (rootNode) {
-      const initialScale = 0.9;
-      const transform = d3.zoomIdentity
-        .translate(width / 2 - rootNode.x * initialScale, height / 2 - rootNode.y * initialScale)
-        .scale(initialScale);
-      svgElement.call(zoom.transform, transform);
-    }
-  }
 
   return { zoom, g, svgElement };
 };
