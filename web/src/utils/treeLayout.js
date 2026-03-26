@@ -15,6 +15,7 @@ export const drawFamilyTree = ({
   collapsedIds,
   onFocus,
   onToggleCollapse,
+  onShowDetails,
   isFirstLoad 
 }) => {
   if (!svgRef.current || !containerRef.current || data.length === 0) return;
@@ -200,9 +201,28 @@ export const drawFamilyTree = ({
       .attr('stroke-width', isSelected ? 3.5 : (isRelated ? 2.5 : 1.5))
       .attr('filter', isSelected ? `url(#${selectedFilterId})` : (isUpdating ? null : `url(#${filterId})`));
 
-    // Collapse Buttons for EVERYONE when selected
+    // Collapse/Info Buttons for EVERYONE when selected
     if (isSelected && !isUpdating) {
-        // Collapse/Focus Up Button (Top Center-Right)
+        // Info Button (Top Left)
+        const infoBtn = nodeGroup.append('g')
+          .attr('class', 'view-action-btn')
+          .attr('transform', `translate(${-nodeWidth / 2 + 15}, ${-nodeHeight / 2 - 12})`)
+          .style('cursor', 'pointer')
+          .on('click', (e) => {
+              e.stopPropagation();
+              onShowDetails();
+          });
+        
+        infoBtn.append('circle').attr('r', 10).attr('fill', '#92400e').attr('stroke', '#fff').attr('stroke-width', 1.5);
+        infoBtn.append('text')
+          .attr('dy', 4)
+          .attr('text-anchor', 'middle')
+          .attr('fill', '#fff')
+          .attr('font-size', '12px')
+          .attr('font-weight', 'bold')
+          .text('i');
+
+        // Collapse/Focus Up Button (Top Right)
         const isFocused = focusId === person.id;
         const focusBtn = nodeGroup.append('g')
           .attr('class', 'view-action-btn')

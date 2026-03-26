@@ -17,6 +17,7 @@ export default function FamilyTree() {
   const [quickAdd, setQuickAdd] = useState(null); // { targetPerson, type }
   const [focusId, setFocusId] = useState(null);
   const [collapsedIds, setCollapsedIds] = useState(new Set());
+  const [showDetails, setShowDetails] = useState(false);
   
   const { 
     mergedData, 
@@ -43,7 +44,10 @@ export default function FamilyTree() {
       selectedPerson,
       focusId,
       collapsedIds,
-      onSelectPerson: setSelectedPerson,
+      onSelectPerson: (person) => {
+        setSelectedPerson(person);
+        setShowDetails(false); // Reset details when selection changes
+      },
       onFocus: (id) => setFocusId(prev => prev === id ? null : id),
       onToggleCollapse: (id) => {
         setCollapsedIds(prev => {
@@ -53,6 +57,7 @@ export default function FamilyTree() {
           return next;
         });
       },
+      onShowDetails: () => setShowDetails(true),
       onQuickAddChild: (person) => setQuickAdd({ targetPerson: person, type: 'child' }),
       onQuickAddSpouse: (person) => setQuickAdd({ targetPerson: person, type: 'spouse' }),
       onQuickDelete: handleAdminDelete,
@@ -129,8 +134,11 @@ export default function FamilyTree() {
       <svg ref={svgRef} className="w-full h-full cursor-grab active:cursor-grabbing touch-none" />
 
       <InfoPanel
-        selectedPerson={selectedPerson}
-        setSelectedPerson={setSelectedPerson}
+        selectedPerson={showDetails ? selectedPerson : null}
+        setSelectedPerson={(p) => {
+          if (!p) setShowDetails(false);
+          setSelectedPerson(p);
+        }}
         allMembers={mergedData}
         isAdmin={isAdmin}
         onUpdate={handleAdminUpdate}
