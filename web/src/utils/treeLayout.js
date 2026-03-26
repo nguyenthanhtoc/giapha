@@ -74,7 +74,7 @@ export const drawFamilyTree = ({
     });
   }
 
-  const treeLayout = d3.tree().nodeSize([300, 200]); // Increased spacing for larger nodes
+  const treeLayout = d3.tree().nodeSize([170, 200]); // Reduced horizontal spacing to ~10px gap (160 node + 10 gap)
   treeLayout(root);
 
   const links = root.links().filter(l => l.source.id !== virtualRootId);
@@ -106,21 +106,32 @@ export const drawFamilyTree = ({
   const currentTransform = d3.zoomTransform(svgRef.current);
   const isFocusBack = !focusId && svgRef.current.__lastFocusId;
   const isFocusNew = focusId && svgRef.current.__lastFocusId !== focusId;
-  const shouldResetView = isFirstLoad || isFocusNew || isFocusBack;
+  const isSelectedNew = selectedId && svgRef.current.__lastSelectedId !== selectedId;
+  const shouldResetView = isFirstLoad || isFocusNew || isFocusBack || isSelectedNew;
 
   if (shouldResetView) {
-    const rootNode = descendants.find(d => d.id === (focusId || descendants[0]?.id)) || descendants[0];
-    if (rootNode) {
-      const initialScale = focusId ? 1.0 : 0.85;
+    const targetNode = isSelectedNew ? selectedNode : (descendants.find(d => d.id === (focusId || descendants[0]?.id)) || descendants[0]);
+    if (targetNode) {
+      // Calculate target scale based on user requirements: 
+      // 1 node = 1/6 width on mobile, 1/10 on PC
+      let targetScale;
+      if (isSelectedNew || focusId) {
+        const isMobile = width < 640;
+        const nodeBaseWidth = 160;
+        targetScale = isMobile ? (width / 6) / nodeBaseWidth : (width / 10) / nodeBaseWidth;
+      } else {
+        targetScale = 0.85;
+      }
+
       const targetTransform = d3.zoomIdentity
-        .translate(width / 2 - rootNode.x * initialScale, height / 2 - rootNode.y * initialScale)
-        .scale(initialScale);
+        .translate(width / 2 - targetNode.x * targetScale, height / 2 - targetNode.y * targetScale)
+        .scale(targetScale);
       
       if (isFirstLoad) {
         svgElement.call(zoom.transform, targetTransform);
         g.attr('transform', targetTransform);
       } else {
-        svgElement.transition().duration(750).ease(d3.easeCubicOut)
+        svgElement.transition().duration(800).ease(d3.easeCubicInOut)
           .call(zoom.transform, targetTransform);
       }
     }
@@ -131,6 +142,7 @@ export const drawFamilyTree = ({
   }
   
   svgRef.current.__lastFocusId = focusId;
+  svgRef.current.__lastSelectedId = selectedId;
 
   svgElement.call(zoom);
   svgElement.on('click', () => onSelectPerson(null));
