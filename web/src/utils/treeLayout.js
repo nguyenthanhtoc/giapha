@@ -257,7 +257,7 @@ export const drawFamilyTree = ({
         // Info Button (Top Left)
         const infoBtn = nodeGroup.append('g')
           .attr('class', 'view-action-btn')
-          .attr('transform', `translate(${-finalNodeWidth / 2 + 15}, ${-finalNodeHeight / 2 - 12})`)
+          .attr('transform', `translate(${finalNodeWidth / 2 - 15}, ${-finalNodeHeight / 2 - 12})`)
           .style('cursor', 'pointer')
           .on('click', (e) => {
               e.stopPropagation();
@@ -277,7 +277,7 @@ export const drawFamilyTree = ({
         const isFocused = focusId === person.id;
         const focusBtn = nodeGroup.append('g')
           .attr('class', 'view-action-btn')
-          .attr('transform', `translate(${finalNodeWidth / 2 - 15}, ${-finalNodeHeight / 2 - 12})`)
+          .attr('transform', `translate(0, ${-finalNodeHeight / 2 - 12})`)
           .style('cursor', 'pointer')
           .on('click', (e) => {
               e.stopPropagation();
@@ -286,12 +286,12 @@ export const drawFamilyTree = ({
         
         focusBtn.append('circle').attr('r', 10).attr('fill', isFocused ? '#1e40af' : '#64748b').attr('stroke', '#fff').attr('stroke-width', 1.5);
         focusBtn.append('text')
-          .attr('dy', isFocused ? 3 : 4.5)
+          .attr('dy', 4)
           .attr('text-anchor', 'middle')
           .attr('fill', '#fff')
           .attr('font-size', '12px')
           .attr('font-weight', 'bold')
-          .text(isFocused ? '↺' : '↑');
+          .text(isFocused ? '−' : '+');
         
         // Add a tooltip-like text if hovered? (optional, for now skip to keep clean)
 
@@ -299,7 +299,7 @@ export const drawFamilyTree = ({
         const isCollapsed = collapsedIds.has(person.id);
         const collapseBtn = nodeGroup.append('g')
           .attr('class', 'view-action-btn')
-          .attr('transform', `translate(${finalNodeWidth / 2 - 15}, ${finalNodeHeight / 2 + 12})`)
+          .attr('transform', `translate(0, ${finalNodeHeight / 2 + 12})`)
           .style('cursor', 'pointer')
           .on('click', (e) => {
               e.stopPropagation();
@@ -318,9 +318,10 @@ export const drawFamilyTree = ({
 
     if (isAdmin && !isUpdating) {
         // Child add button (Bottom)
+        // Child add button (Bottom Left)
         const childBtn = nodeGroup.append('g')
           .attr('class', 'quick-add-btn')
-          .attr('transform', `translate(0, ${finalNodeHeight / 2 + 12})`)
+          .attr('transform', `translate(${-finalNodeWidth / 2 + 15}, ${finalNodeHeight / 2 + 12})`)
           .style('cursor', 'copy')
           .on('click', (e) => {
               e.stopPropagation();
@@ -343,10 +344,10 @@ export const drawFamilyTree = ({
         spouseBtn.append('circle').attr('r', 10).attr('fill', '#be123c').attr('stroke', '#fff').attr('stroke-width', 1.5);
         spouseBtn.append('text').attr('dy', 4.5).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').text('♥');
 
-        // Quick delete button (Top)
+        // Quick delete button (Top Left)
         const deleteBtn = nodeGroup.append('g')
           .attr('class', 'quick-delete-btn')
-          .attr('transform', `translate(0, ${-finalNodeHeight / 2 - 12})`)
+          .attr('transform', `translate(${-finalNodeWidth / 2 + 15}, ${-finalNodeHeight / 2 - 12})`)
           .style('cursor', 'pointer')
           .on('click', (e) => {
               e.stopPropagation();
