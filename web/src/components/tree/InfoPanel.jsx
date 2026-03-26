@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 export default function InfoPanel({ 
   selectedPerson, 
   setSelectedPerson, 
+  allMembers,
   isAdmin, 
   onUpdate, 
   onDelete, 
@@ -13,13 +14,34 @@ export default function InfoPanel({
 }) {
   const [editName, setEditName] = useState('');
   const [editBorn, setEditBorn] = useState('');
+  const [editSpouseName, setEditSpouseName] = useState('');
+
+  const spouse = allMembers?.find(m => m.spouseId === selectedPerson?.id);
 
   useEffect(() => {
     if (selectedPerson) {
       setEditName(selectedPerson.name || '');
       setEditBorn(selectedPerson.born || '');
     }
-  }, [selectedPerson]);
+    if (spouse) {
+      setEditSpouseName(spouse.name || '');
+    } else {
+      setEditSpouseName('');
+    }
+  }, [selectedPerson, spouse]);
+
+  const handleSave = async () => {
+    // Update main person
+    await onUpdate(selectedPerson.id, editName, editBorn);
+    
+    // Update spouse if exists and name changed
+    if (spouse && editSpouseName !== spouse.name) {
+      await onUpdate(spouse.id, editSpouseName, spouse.born);
+    }
+    
+    // Auto-close or just stay? User didn't specify. 
+    // Usually stay is better if they want to see result.
+  };
 
   if (!selectedPerson) return null;
 
@@ -56,7 +78,25 @@ export default function InfoPanel({
               </h2>
             )}
 
-            <p className="text-[10px] text-amber-800 font-bold uppercase tracking-[0.2em] mt-1 mb-4 border-b border-amber-800/10 pb-0.5">{selectedPerson.role || 'Thành viên'}</p>
+            {isAdmin && spouse && (
+              <div className="w-full mt-2 flex flex-col items-center">
+                <span className="text-amber-900/40 text-[9px] uppercase tracking-widest font-bold">Vợ/Chồng</span>
+                <input
+                  type="text"
+                  value={editSpouseName}
+                  onChange={(e) => setEditSpouseName(e.target.value)}
+                  className="text-center bg-white/50 text-red-900 border-b border-amber-800/20 px-2 py-0.5 text-lg font-bold w-full outline-none font-spectral mt-1"
+                  placeholder="Tên vợ/chồng"
+                />
+              </div>
+            )}
+            {!isAdmin && spouse && (
+              <p className="text-sm font-bold text-amber-900/60 mt-1 italic">
+                 ({spouse.gender === 'female' ? 'Vợ' : 'Chồng'}: {spouse.name})
+              </p>
+            )}
+
+            <p className="text-[10px] text-amber-800 font-bold uppercase tracking-[0.2em] mt-3 mb-4 border-b border-amber-800/10 pb-0.5">{selectedPerson.role || 'Thành viên'}</p>
 
             <div className="w-full grid grid-cols-2 gap-4 text-center mb-4">
               <div className="flex flex-col">
@@ -82,7 +122,7 @@ export default function InfoPanel({
             {isAdmin && (
               <div className="w-full space-y-2">
                 <button
-                  onClick={() => onUpdate(selectedPerson.id, editName, editBorn)}
+                  onClick={handleSave}
                   className="w-full bg-red-800 hover:bg-red-700 active:scale-[0.98] text-amber-50 font-bold py-2.5 px-4 rounded-lg transition-all shadow-md uppercase tracking-wider text-[10px]"
                 >
                   Cập Nhật Thông Tin

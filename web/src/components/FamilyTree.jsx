@@ -42,8 +42,8 @@ export default function FamilyTree() {
 
 
   const handleAdminUpdate = async (id, name, born) => {
-    const res = await handleUpdate(id, name, born);
-    if (res.success) alert('Cập nhật thành công!');
+    await handleUpdate(id, name, born);
+    // Silent update as requested
   };
 
   const handleAdminDelete = async (person) => {
@@ -107,6 +107,7 @@ export default function FamilyTree() {
       <InfoPanel
         selectedPerson={selectedPerson}
         setSelectedPerson={setSelectedPerson}
+        allMembers={mergedData}
         isAdmin={isAdmin}
         onUpdate={handleAdminUpdate}
         onDelete={handleAdminDelete}
