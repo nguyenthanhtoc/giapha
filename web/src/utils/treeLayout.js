@@ -76,7 +76,7 @@ export const drawFamilyTree = ({
     });
   }
 
-  const treeLayout = d3.tree().nodeSize([170, 200]); // Reduced horizontal spacing to ~10px gap (160 node + 10 gap)
+  const treeLayout = d3.tree().nodeSize([175, 200]); // Increased horizontal spacing (160 node + ~15px gap)
   treeLayout(root);
 
   const generationLabels = [
@@ -256,7 +256,10 @@ export const drawFamilyTree = ({
 
     // Dynamic width calculation with 8px padding
     const nameWidth = measureText(person.name, 14, 'bold');
-    const spouseWidths = personSpouses.map(s => measureText(`(${s.name})`, 11, '500'));
+    const spouseWidths = personSpouses.map(s => {
+      const label = s.gender === 'female' ? 'Vợ: ' : 'Chồng: ';
+      return measureText(`${label}${s.name}`, 14, 'bold');
+    });
     const maxTextWidth = Math.max(nameWidth, ...spouseWidths, 0);
     const nodeWidth = Math.max(defaultNodeWidth, maxTextWidth + 8); // 4px padding on each side
 
@@ -485,13 +488,16 @@ export const drawFamilyTree = ({
     // Spouse names (multi-line)
     if (totalSpouses > 0) {
       personSpouses.forEach((s, i) => {
+        const label = s.gender === 'female' ? 'Vợ: ' : 'Chồng: ';
+        const spouseColor = s.gender === 'female' ? '#be185d' : '#1e40af'; // Pink/Red for wife, Blue for husband-spouse
+        
         nodeGroup.append('text')
-          .attr('dy', nameDy + (i + 1) * rowHeight * scaleFactor)
+          .attr('dy', nameDy + (i + 1) * (rowHeight + 4) * scaleFactor) // Increased gap slightly for larger font
           .attr('text-anchor', 'middle')
-          .attr('fill', '#4b5563')
-          .attr('font-size', isSpecialRoot ? '22px' : '11px')
-          .attr('font-weight', '500')
-          .text(`(${s.name})`);
+          .attr('fill', isSpecialRoot ? '#92400e' : spouseColor)
+          .attr('font-size', isSpecialRoot ? '28px' : '14px')
+          .attr('font-weight', 'bold')
+          .text(`${label}${s.name}`);
       });
     }
 

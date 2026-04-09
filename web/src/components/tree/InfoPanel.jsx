@@ -110,8 +110,8 @@ export default function InfoPanel({
             {!isAdmin && spouses.length > 0 && (
               <div className="flex flex-col items-center gap-1 mt-1">
                 {spouses.map(s => (
-                  <p key={s.id} className="text-sm font-bold text-amber-900/60 italic">
-                    ({s.name})
+                  <p key={s.id} className="text-sm font-bold text-amber-900/80 italic">
+                    {s.gender === 'female' ? 'Vợ: ' : 'Chồng: '}{s.name}
                   </p>
                 ))}
               </div>

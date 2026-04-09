@@ -19,7 +19,7 @@ export default function FamilyTree() {
   const [collapsedIds, setCollapsedIds] = useState(new Set());
   const [showDetails, setShowDetails] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(0.85);
-  const [showFromGen15, setShowFromGen15] = useState(false);
+  const [showFromGen15, setShowFromGen15] = useState(true);
   
   const { 
     mergedData, 
