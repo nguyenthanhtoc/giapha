@@ -160,7 +160,7 @@ export default function FamilyTree() {
       />
 
       {/* Generation Filter Toggle */}
-      <div className="absolute top-20 right-4 sm:top-24 sm:right-8 z-20">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-8 z-30">
         <button
           onClick={() => setShowFromGen15(!showFromGen15)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all duration-300 shadow-lg ${
@@ -177,7 +177,7 @@ export default function FamilyTree() {
       </div>
 
       {/* Zoom Indicator */}
-      <div className="absolute bottom-4 left-4 sm:bottom-8 sm:left-8 z-20 pointer-events-none select-none">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-8 z-30 pointer-events-none select-none">
         <div className="bg-[#fffbeb]/90 backdrop-blur-sm border border-amber-900/30 px-3 py-1.5 rounded shadow-lg flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-tighter">Thu Phóng</span>
