@@ -18,6 +18,7 @@ export default function InfoPanel({
   const [editDeath, setEditDeath] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const [editAlias, setEditAlias] = useState('');
+  const [editIsAlive, setEditIsAlive] = useState(true);
   
   const [editSpouseStates, setEditSpouseStates] = useState([]); // Array of spouse objects for editing
   
@@ -33,6 +34,7 @@ export default function InfoPanel({
       setEditDeath(selectedPerson.death || '');
       setEditAddress(selectedPerson.address || '');
       setEditAlias(selectedPerson.alias || '');
+      setEditIsAlive(selectedPerson.isAlive !== false);
     }
 
     const spouseList = spouses.map(s => ({
@@ -42,7 +44,8 @@ export default function InfoPanel({
       death: s.death || '',
       address: s.address || '',
       alias: s.alias || '',
-      gender: s.gender
+      gender: s.gender,
+      isAlive: s.isAlive !== false
     }));
     setEditSpouseStates(spouseList);
     
@@ -56,12 +59,12 @@ export default function InfoPanel({
     setIsSaving(true);
     try {
       // Update main person
-      await onUpdate(selectedPerson.id, capitalizedName, editBorn, editDeath, editAddress, editAlias);
+      await onUpdate(selectedPerson.id, capitalizedName, editBorn, editDeath, editAddress, editAlias, editIsAlive);
       
       // Update all spouses
       for (const s of editSpouseStates) {
         const capsName = capitalizeName(s.name);
-        await onUpdate(s.id, capsName, s.born, s.death, s.address, s.alias);
+        await onUpdate(s.id, capsName, s.born, s.death, s.address, s.alias, s.isAlive);
       }
       
       setSelectedPerson(null);
@@ -137,6 +140,27 @@ export default function InfoPanel({
               </h2>
             )}
 
+            {/* Status Toggle / Display */}
+            <div className="mb-4">
+              {isAdmin ? (
+                <div className="flex items-center gap-3 bg-white/40 px-4 py-2 rounded-xl border border-amber-800/10">
+                  <span className="text-[10px] uppercase font-black text-amber-900/60">Trạng thái:</span>
+                  <button 
+                    onClick={() => setEditIsAlive(!editIsAlive)}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${editIsAlive ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-red-100 text-red-800 border border-red-200'}`}
+                  >
+                    <div className={`w-2 h-2 rounded-full ${editIsAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                    {editIsAlive ? 'CÒN SỐNG' : 'ĐÃ MẤT'}
+                  </button>
+                </div>
+              ) : (
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold ${selectedPerson.isAlive ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
+                  <div className={`w-2 h-2 rounded-full ${selectedPerson.isAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                  {selectedPerson.isAlive ? 'CÒN SỐNG' : 'ĐÃ MẤT'}
+                </div>
+              )}
+            </div>
+
             <p className="text-[10px] text-amber-800 font-bold uppercase tracking-[0.2em] mb-1 border-b border-amber-800/10 pb-1 w-full text-center">
               {selectedPerson.generation || selectedPerson.role || 'Thành viên'}
             </p>
@@ -184,8 +208,21 @@ export default function InfoPanel({
                 {editSpouseStates.map((s, index) => (
                   <div key={s.id} className={`mb-6 p-3 rounded-xl bg-amber-900/5 border border-amber-900/10 ${index > 0 ? 'mt-6 pt-6 border-t-2 border-dashed' : ''}`}>
                     {isAdmin ? (
-                       <div className="w-full mb-4">
-                          <span className="text-amber-900/40 text-[9px] uppercase tracking-widest font-bold block text-center mb-1">Tên Vợ/Chồng {index + 1}</span>
+                       <div className="w-full flex flex-col gap-4 mb-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-amber-900/40 text-[9px] uppercase tracking-widest font-bold">Người Phối ngẫu {index + 1}</span>
+                            <button 
+                              onClick={() => {
+                                const newStates = [...editSpouseStates];
+                                newStates[index] = { ...newStates[index], isAlive: !newStates[index].isAlive };
+                                setEditSpouseStates(newStates);
+                              }}
+                              className={`flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-bold transition-all ${s.isAlive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}
+                            >
+                              <div className={`w-2 h-2 rounded-full ${s.isAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                              {s.isAlive ? 'CÒN SỐNG' : 'ĐÃ MẤT'}
+                            </button>
+                          </div>
                           <input
                             type="text"
                             value={s.name}
@@ -200,9 +237,12 @@ export default function InfoPanel({
                        </div>
                     ) : (
                       <div className="text-center mb-2">
-                        <h3 className="text-lg sm:text-xl font-black text-red-900 uppercase tracking-wide font-spectral leading-tight">
-                          {s.gender === 'female' ? 'Vợ: ' : 'Chồng: '}{s.name}
-                        </h3>
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <h3 className="text-lg sm:text-xl font-black text-red-900 uppercase tracking-wide font-spectral leading-tight">
+                            {s.gender === 'female' ? 'Vợ: ' : 'Chồng: '}{s.name}
+                          </h3>
+                          <div className={`w-1.5 h-1.5 rounded-full ${s.isAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                        </div>
                         {s.alias && <p className="text-xs italic font-spectral text-amber-900/60">({s.alias})</p>}
                       </div>
                     )}

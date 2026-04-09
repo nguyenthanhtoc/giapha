@@ -20,9 +20,13 @@ export const useFamilyData = (initialData = []) => {
         parentId: m.parent_id,
         spouseId: m.spouse_id,
         highlightDesc: m.highlight_desc,
-        // Resilient mapping for alias and address
+        // Resilient mapping for alias, address and is_alive
         alias: m.alias || m.bi_danh || '',
-        address: m.address || m.dia_chi || ''
+        address: m.address || m.dia_chi || '',
+        // Default to true if is_alive is null AND death is null/empty
+        isAlive: m.is_alive !== null && m.is_alive !== undefined 
+          ? m.is_alive 
+          : (m.death || m.nam_mat ? false : true)
       }));
 
       setMergedData(mapped);
@@ -38,13 +42,11 @@ export const useFamilyData = (initialData = []) => {
 
   const [updatingIds, setUpdatingIds] = useState(new Set());
 
-  const handleUpdate = useCallback(async (id, name, born, death, address, alias) => {
+  const handleUpdate = useCallback(async (id, name, born, death, address, alias, isAlive) => {
     try {
       setUpdatingIds(prev => new Set(prev).add(id));
-      // Only send columns that are likely to exist. 
-      // The error logs confirmed 'address' is missing.
-      // We'll try 'dia_chi' and 'bi_danh' instead.
-      const updateData = { name, born, death };
+      
+      const updateData = { name, born, death, is_alive: isAlive };
       if (address) {
           updateData.dia_chi = address;
       }
@@ -110,11 +112,11 @@ export const useFamilyData = (initialData = []) => {
         gender: data.gender,
         parent_id: data.parentId || null,
         spouse_id: data.spouseId || null,
-        role: data.role || null
+        role: data.role || null,
+        is_alive: data.isAlive !== undefined ? data.isAlive : true
       };
 
       if (data.alias) {
-        insertData.alias = data.alias;
         insertData.bi_danh = data.alias;
       }
 

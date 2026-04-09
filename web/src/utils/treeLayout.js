@@ -288,6 +288,9 @@ export const drawFamilyTree = ({
     const isRelated = selectedId && relatedIds.has(person.id);
     const isFaded = selectedId && !isSelected && !isRelated;
 
+    // Node Alive Logic: If main person OR any spouse is alive, the whole node is "alive" (blue)
+    const nodeIsAlive = person.isAlive || personSpouses.some(s => s.isAlive);
+
     const nodeGroup = gNode.append('g')
       .attr('class', `person-node ${isUpdating ? 'animate-pulse' : ''}`)
       .style('opacity', isFaded ? 0.35 : 1)
@@ -324,18 +327,18 @@ export const drawFamilyTree = ({
       
       pattern.append('rect')
         .attr('width', 40).attr('height', 40)
-        .attr('fill', '#fef3c7'); // Background of pattern
+        .attr('fill', nodeIsAlive ? '#f0f9ff' : '#fef3c7'); // Background of pattern
 
       pattern.append('path')
         .attr('d', 'M0 20 Q10 10 20 20 T40 20 M20 0 Q30 10 20 20 T20 40')
         .attr('fill', 'none')
-        .attr('stroke', '#d97706')
+        .attr('stroke', nodeIsAlive ? '#0369a1' : '#d97706')
         .attr('stroke-width', 1.5)
         .attr('opacity', 0.15);
         
       pattern.append('circle')
         .attr('cx', 20).attr('cy', 20).attr('r', 3)
-        .attr('fill', '#d97706')
+        .attr('fill', nodeIsAlive ? '#0369a1' : '#d97706')
         .attr('opacity', 0.2);
     }
 
@@ -349,14 +352,16 @@ export const drawFamilyTree = ({
       .attr('rx', 8 * scaleFactor)
       .attr('fill', d => {
           if (isSpecialRoot) return 'url(#pattern-root)';
-          if (isSelected) return person.gender === 'male' ? '#fff7ed' : '#fff1f2';
+          if (isSelected) return nodeIsAlive ? '#f0f9ff' : (person.gender === 'male' ? '#fff7ed' : '#fff1f2');
+          if (nodeIsAlive) return person.gender === 'male' ? '#f0f9ff' : '#fdf4ff'; // Sky blue for male, Light purple/blue-ish pink for female?
           if (isRelated) return person.gender === 'male' ? '#fefce8' : '#fff1f2';
           return person.gender === 'male' ? '#fffbeb' : '#fdf2f8';
       })
       .attr('stroke', d => {
-          if (isSpecialRoot) return '#92400e'; // Root specific border
-          if (isSelected) return '#dc2626'; // Vibrant red
-          if (isRelated) return '#b45309'; // Warm amber
+          if (isSpecialRoot) return nodeIsAlive ? '#0369a1' : '#92400e'; // Root specific border
+          if (isSelected) return '#dc2626'; 
+          if (nodeIsAlive) return person.gender === 'male' ? '#0369a1' : '#c026d3'; // Blue vs Fuchsia
+          if (isRelated) return '#b45309'; 
           return person.gender === 'male' ? '#b45309' : '#be185d';
       })
       .attr('stroke-width', isSpecialRoot ? 4 : (isSelected ? 3.5 : (isRelated ? 2.5 : 1.5)))
