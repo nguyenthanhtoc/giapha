@@ -65,14 +65,25 @@ export const prepareTreeData = (data, collapsedIds, focusId, showFromGen15) => {
   let descendants = root.descendants().filter(d => d.id !== virtualRootId);
   let links = root.links().filter(l => l.source.id !== virtualRootId);
 
-  // Add generation info to nodes
+  // Add generation info and pre-calculate heights
   descendants.forEach(d => {
+    // Height calculation
+    const person = d.data;
+    const personSpouses = spousesMap[person.id] || [];
+    const hasAlias = person.alias && person.alias.trim() !== '';
+    const totalSpouses = personSpouses.length;
+    const rowHeight = 14, spacing = 4;
+    const totalRows = 1 + (hasAlias ? 1 : 0) + totalSpouses;
+    const textContentHeight = totalRows * rowHeight + (totalRows - 1) * spacing;
+    const verticalPadding = 25;
+    d.dynamicNodeHeight = Math.max(65, textContentHeight + verticalPadding);
+
+    // Generation info
     if (d.depth > 0) {
       const genIndex = d.depth - 1;
       const genLabel = generationLabels[genIndex] || `Thế Hệ ${d.depth + 10}`;
       d.data.generation = genLabel;
       
-      const personSpouses = spousesMap[d.data.id] || [];
       personSpouses.forEach(s => {
         s.generation = genLabel;
       });

@@ -7,8 +7,10 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
     const sourcePerson = d.source.data;
     const isSourceRoot = d.source.depth === 1;
     const isSourceSpecial = sourcePerson.name === 'Nguyễn Thanh Dung' || isSourceRoot;
-    const sourceOffset = (65 * (isSourceSpecial ? 1.75 : 1.0)) / 2;
-    const targetOffset = 32.5;
+    const sourceHeight = d.source.dynamicNodeHeight || 65;
+    const targetHeight = d.target.dynamicNodeHeight || 65;
+    const sourceOffset = (sourceHeight * (isSourceSpecial ? 1.75 : 1.0)) / 2;
+    const targetOffset = targetHeight / 2;
 
     const startY = ySource + sourceOffset;
     const endY = yTarget - targetOffset;

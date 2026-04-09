@@ -34,9 +34,8 @@ export const renderNode = ({
 }) => {
   const person = d.data;
   const personSpouses = spousesMap[person.id] || [];
-  const defaultNodeWidth = 160, nodeHeight = 65;
+  const dynamicNodeHeight = d.dynamicNodeHeight || 65;
 
-  // Dynamic width calculation
   const nameWidth = measureText(person.name, 14, 'bold');
   const spouseWidths = personSpouses.map(s => {
     const label = s.gender === 'female' ? 'Vợ: ' : 'Chồng: ';
@@ -90,7 +89,7 @@ export const renderNode = ({
 
   const scaleFactor = isSpecialRoot ? 1.75 : 1.0;
   const finalNodeWidth = nodeWidth * scaleFactor;
-  const finalNodeHeight = nodeHeight * scaleFactor;
+  const finalNodeHeight = dynamicNodeHeight * scaleFactor;
 
   nodeGroup.append('rect')
     .attr('x', -finalNodeWidth / 2).attr('y', -finalNodeHeight / 2)
@@ -117,11 +116,11 @@ export const renderNode = ({
   renderActionButtons({ nodeGroup, isSelected, isUpdating, isAdmin, finalNodeWidth, finalNodeHeight, person, data, virtualRootId, focusId, collapsedIds, onShowDetails, onSelectPerson, onFocus, onToggleCollapse, onQuickAddChild, onQuickAddSpouse, onQuickDelete });
 
   // Text Content
-  renderTextContent({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor });
+  renderTextContent({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor, dynamicNodeHeight });
 
   if (isUpdating) {
     nodeGroup.append('circle')
-      .attr('cx', nodeWidth / 2 - 10).attr('cy', -nodeHeight / 2 + 10)
+      .attr('cx', nodeWidth / 2 - 10).attr('cy', -dynamicNodeHeight / 2 + 10)
       .attr('r', 4).attr('fill', '#d97706')
       .append('animate')
       .attr('attributeName', 'opacity').attr('values', '0;1;0').attr('dur', '1s').attr('repeatCount', 'indefinite');
@@ -171,12 +170,13 @@ const renderActionButtons = ({ nodeGroup, isSelected, isUpdating, isAdmin, final
     }
 };
 
-const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor }) => {
+const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor, dynamicNodeHeight }) => {
     const hasAlias = person.alias && person.alias.trim() !== '';
     const totalSpouses = personSpouses.length;
     const rowHeight = 14, spacing = 4;
     const totalRows = 1 + (hasAlias ? 1 : 0) + totalSpouses;
-    let currentDy = (5 - ((totalRows - 1) * (rowHeight + spacing)) / 2) * scaleFactor;
+    const textContentHeight = totalRows * rowHeight + (totalRows - 1) * spacing;
+    let currentDy = ((rowHeight / 2) - (textContentHeight / 2)) * scaleFactor;
     
     nodeGroup.append('text')
       .attr('dy', currentDy).attr('text-anchor', 'middle').attr('fill', isSpecialRoot ? '#78350f' : '#1c1917')
