@@ -17,7 +17,8 @@ export const drawFamilyTree = ({
   onToggleCollapse,
   onShowDetails,
   onZoom,
-  isFirstLoad 
+  isFirstLoad,
+  showFromGen15
 }) => {
   if (!svgRef.current || !containerRef.current || data.length === 0) return;
 
@@ -90,10 +91,19 @@ export const drawFamilyTree = ({
     "Đệ Thập Cửu Thế"
   ];
 
-  const links = root.links().filter(l => l.source.id !== virtualRootId);
-  const descendants = root.descendants().filter(d => d.id !== virtualRootId);
+  const g = svgElement.append('g').attr('class', 'tree-viewport');
 
-  // Add generation info to nodes
+  const zoom = d3.zoom()
+    .scaleExtent([0.1, 5])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform);
+      if (onZoom) onZoom(event.transform.k);
+    });
+
+  let links = root.links().filter(l => l.source.id !== virtualRootId);
+  let descendants = root.descendants().filter(d => d.id !== virtualRootId);
+
+  // Add generation info to nodes (First pass to get all info)
   descendants.forEach(d => {
     if (d.depth > 0) {
       const genIndex = d.depth - 1;
@@ -108,14 +118,21 @@ export const drawFamilyTree = ({
     }
   });
 
-  const g = svgElement.append('g').attr('class', 'tree-viewport');
-
-  const zoom = d3.zoom()
-    .scaleExtent([0.1, 5])
-    .on('zoom', (event) => {
-      g.attr('transform', event.transform);
-      if (onZoom) onZoom(event.transform.k);
+  // Apply generation filtering if flag is set
+  if (showFromGen15) {
+    const minDepth = 5;
+    // We only keep nodes at depth 5 and below
+    descendants = descendants.filter(d => d.depth >= minDepth);
+    links = links.filter(l => l.source.depth >= minDepth && l.target.depth >= minDepth);
+    
+    // Shift Y coordinates up to remove the gap
+    // Depth 5 is at d.depth * 200. We want to shift it to start near 0.
+    const offsetY = minDepth * 200 - 100; // Leave a little space at top
+    descendants.forEach(d => {
+      d.y -= offsetY;
     });
+  }
+
 
   // Highlight logic
   const selectedId = selectedPerson?.id;

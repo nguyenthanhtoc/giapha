@@ -19,6 +19,7 @@ export default function FamilyTree() {
   const [collapsedIds, setCollapsedIds] = useState(new Set());
   const [showDetails, setShowDetails] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(0.85);
+  const [showFromGen15, setShowFromGen15] = useState(false);
   
   const { 
     mergedData, 
@@ -63,13 +64,14 @@ export default function FamilyTree() {
       onQuickAddSpouse: (person) => setQuickAdd({ targetPerson: person, type: 'spouse' }),
       onQuickDelete: handleAdminDelete,
       onZoom: (k) => setZoomLevel(k),
-      isFirstLoad: isFirstLoad.current
+      isFirstLoad: isFirstLoad.current,
+      showFromGen15
     });
     
     if (mergedData.length > 0) {
       isFirstLoad.current = false;
     }
-  }, [mergedData, updatingIds, isAdmin, selectedPerson, focusId, collapsedIds]);
+  }, [mergedData, updatingIds, isAdmin, selectedPerson, focusId, collapsedIds, showFromGen15]);
 
   const handleAdminUpdate = async (id, name, born) => {
     await handleUpdate(id, name, born);
@@ -156,6 +158,23 @@ export default function FamilyTree() {
         onClose={() => setQuickAdd(null)}
         onSave={handleQuickSave}
       />
+
+      {/* Generation Filter Toggle */}
+      <div className="absolute top-20 right-4 sm:top-24 sm:right-8 z-20">
+        <button
+          onClick={() => setShowFromGen15(!showFromGen15)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all duration-300 shadow-lg ${
+            showFromGen15 
+              ? 'bg-amber-900 border-amber-900 text-[#fffbeb]' 
+              : 'bg-[#fffbeb]/90 border-amber-900/30 text-amber-900 hover:border-amber-900/60'
+          }`}
+        >
+          <div className={`w-3 h-3 rounded-full ${showFromGen15 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-900/20'}`} />
+          <span className="text-xs sm:text-sm font-black font-spectral uppercase tracking-wider">
+            {showFromGen15 ? 'Hiển thị: Đệ 15 trở đi' : 'Tất cả các đời'}
+          </span>
+        </button>
+      </div>
 
       {/* Zoom Indicator */}
       <div className="absolute bottom-4 left-4 sm:bottom-8 sm:left-8 z-20 pointer-events-none select-none">
