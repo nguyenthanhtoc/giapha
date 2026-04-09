@@ -76,7 +76,7 @@ export const drawFamilyTree = ({
     });
   }
 
-  const treeLayout = d3.tree().nodeSize([175, 200]); // Increased horizontal spacing (160 node + ~15px gap)
+  const treeLayout = d3.tree().nodeSize([250, 240]); // Increased spacing for clarity: [Horizontal, Vertical]
   treeLayout(root);
 
   const generationLabels = [
@@ -203,15 +203,28 @@ export const drawFamilyTree = ({
   const linkGenerator = d => {
     const xSource = d.source.x, ySource = d.source.y;
     const xTarget = d.target.x, yTarget = d.target.y;
-    const midY = (ySource + yTarget) / 2;
+    const sourcePerson = d.source.data;
+    const isSourceRoot = d.source.depth === 1;
+    const isSourceSpecial = sourcePerson.name === 'Nguyễn Thanh Dung' || isSourceRoot;
+    const sourceOffset = (65 * (isSourceSpecial ? 1.75 : 1.0)) / 2;
+
+    const targetOffset = 32.5; // Standard node height / 2
 
     // If source is hidden (Gen 14 or above) in filtered mode, 
-    // don't draw the vertical line up to the parent.
+    // we still want to show a connection coming from the horizontal "sibling line" level.
     if (showFromGen15 && d.source.depth < 5) {
+      const midY = (ySource + yTarget) / 2;
       return `M${xSource},${midY} H${xTarget} V${yTarget}`;
     }
-    
-    return `M${xSource},${ySource} V${midY} H${xTarget} V${yTarget}`;
+
+    // Use a smooth vertical link (Bezier curve)
+    return d3.linkVertical()
+      .x(d => d[0])
+      .y(d => d[1])
+      ({
+        source: [xSource, ySource + sourceOffset],
+        target: [xTarget, yTarget - targetOffset]
+      });
   };
 
   g.append('g')
