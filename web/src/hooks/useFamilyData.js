@@ -46,13 +46,14 @@ export const useFamilyData = (initialData = []) => {
     try {
       setUpdatingIds(prev => new Set(prev).add(id));
       
-      const updateData = { name, born, death, is_alive: isAlive };
-      if (address) {
-          updateData.dia_chi = address;
-      }
-      if (alias) {
-          updateData.bi_danh = alias;
-      }
+      const updateData = { 
+        name, 
+        born: born || null, 
+        death: death || null, 
+        is_alive: isAlive,
+        bi_danh: alias || null,
+        dia_chi: address || null
+      };
 
       const { error } = await supabase
         .from('members')
@@ -113,12 +114,10 @@ export const useFamilyData = (initialData = []) => {
         parent_id: data.parentId || null,
         spouse_id: data.spouseId || null,
         role: data.role || null,
-        is_alive: data.isAlive !== undefined ? data.isAlive : true
+        is_alive: data.isAlive !== undefined ? data.isAlive : true,
+        bi_danh: data.alias || null,
+        dia_chi: data.address || null
       };
-
-      if (data.alias) {
-        insertData.bi_danh = data.alias;
-      }
 
       const { data: inserted, error } = await supabase
         .from('members')
