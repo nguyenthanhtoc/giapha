@@ -520,6 +520,7 @@ export const drawFamilyTree = ({
           .attr('fill', isSpecialRoot ? '#92400e' : spouseColor)
           .attr('font-size', isSpecialRoot ? '28px' : '14px')
           .attr('font-weight', 'bold')
+          .attr('class', isSpecialRoot ? 'font-spectral' : '')
           .text(`${label}${s.name}`);
       });
     }
