@@ -15,6 +15,7 @@ export default function InfoPanel({
 }) {
   const [editName, setEditName] = useState('');
   const [editBorn, setEditBorn] = useState('');
+  const [editDeath, setEditDeath] = useState('');
   const [editSpouseName, setEditSpouseName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -25,6 +26,7 @@ export default function InfoPanel({
     if (selectedPerson) {
       setEditName(selectedPerson.name || '');
       setEditBorn(selectedPerson.born || '');
+      setEditDeath(selectedPerson.death || '');
     }
     if (spouse) {
       setEditSpouseName(spouse.name || '');
@@ -44,11 +46,11 @@ export default function InfoPanel({
     setIsSaving(true);
     try {
       // Update main person
-      await onUpdate(selectedPerson.id, capitalizedName, editBorn);
+      await onUpdate(selectedPerson.id, capitalizedName, editBorn, editDeath);
       
       // Update spouse if exists and name changed
       if (spouse && capitalizedSpouseName !== spouse.name) {
-        await onUpdate(spouse.id, capitalizedSpouseName, spouse.born);
+        await onUpdate(spouse.id, capitalizedSpouseName, spouse.born, spouse.death);
       }
       
       // Auto-close popup
@@ -138,9 +140,19 @@ export default function InfoPanel({
               </div>
               <div className="flex flex-col">
                 <span className="text-amber-900/40 text-[9px] uppercase tracking-widest font-bold">Mất Năm</span>
-                <span className={`mt-0.5 font-spectral ${selectedPerson.death ? 'text-red-900 text-base font-bold' : 'text-red-900/40 text-[10px] font-medium italic'}`}>
-                  {selectedPerson.death || 'Chưa Có Thông Tin'}
-                </span>
+                {isAdmin ? (
+                  <input
+                    type="text"
+                    value={editDeath}
+                    onChange={(e) => setEditDeath(e.target.value)}
+                    className="mt-1 bg-white/50 text-red-900 border border-amber-800/10 rounded px-1 py-0.5 text-xs text-center w-full"
+                    placeholder="Năm mất"
+                  />
+                ) : (
+                  <span className={`mt-0.5 font-spectral ${selectedPerson.death ? 'text-red-900 text-base font-bold' : 'text-red-900/40 text-[10px] font-medium italic'}`}>
+                    {selectedPerson.death || 'Chưa Có Thông Tin'}
+                  </span>
+                )}
               </div>
             </div>
 
