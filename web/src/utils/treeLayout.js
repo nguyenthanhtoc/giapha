@@ -76,7 +76,7 @@ export const drawFamilyTree = ({
     });
   }
 
-  const treeLayout = d3.tree().nodeSize([250, 240]); // Increased spacing for clarity: [Horizontal, Vertical]
+  const treeLayout = d3.tree().nodeSize([200, 192]); // Reduced spacing by 20% for a more compact view
   treeLayout(root);
 
   const generationLabels = [
