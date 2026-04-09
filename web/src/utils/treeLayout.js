@@ -121,9 +121,11 @@ export const drawFamilyTree = ({
   // Apply generation filtering if flag is set
   if (showFromGen15) {
     const minDepth = 5;
-    // We only keep nodes at depth 5 and below
+    // We keep nodes at depth 5 and below
     descendants = descendants.filter(d => d.depth >= minDepth);
-    links = links.filter(l => l.source.depth >= minDepth && l.target.depth >= minDepth);
+    // Include links where the TARGET is at least minDepth. 
+    // This allows identifying siblings via their common parent (even if parent is hidden).
+    links = links.filter(l => l.target.depth >= minDepth);
     
     // Shift Y coordinates up to remove the gap
     // Depth 5 is at d.depth * 200. We want to shift it to start near 0.
@@ -201,7 +203,15 @@ export const drawFamilyTree = ({
   const linkGenerator = d => {
     const xSource = d.source.x, ySource = d.source.y;
     const xTarget = d.target.x, yTarget = d.target.y;
-    return `M${xSource},${ySource} V${(ySource + yTarget) / 2} H${xTarget} V${yTarget}`;
+    const midY = (ySource + yTarget) / 2;
+
+    // If source is hidden (Gen 14 or above) in filtered mode, 
+    // don't draw the vertical line up to the parent.
+    if (showFromGen15 && d.source.depth < 5) {
+      return `M${xSource},${midY} H${xTarget} V${yTarget}`;
+    }
+    
+    return `M${xSource},${ySource} V${midY} H${xTarget} V${yTarget}`;
   };
 
   g.append('g')
