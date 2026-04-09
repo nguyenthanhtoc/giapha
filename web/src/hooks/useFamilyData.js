@@ -19,7 +19,10 @@ export const useFamilyData = (initialData = []) => {
         ...m,
         parentId: m.parent_id,
         spouseId: m.spouse_id,
-        highlightDesc: m.highlight_desc
+        highlightDesc: m.highlight_desc,
+        // Resilient mapping for alias and address
+        alias: m.alias || m.bi_danh || '',
+        address: m.address || m.dia_chi || ''
       }));
 
       setMergedData(mapped);
@@ -38,9 +41,24 @@ export const useFamilyData = (initialData = []) => {
   const handleUpdate = useCallback(async (id, name, born, death, address, alias) => {
     try {
       setUpdatingIds(prev => new Set(prev).add(id));
+      
+      // We try to update both naming conventions to be safe, 
+      // though typically you should use the one that exists in your DB.
+      // If the error persists, please ensure columns 'alias' (or 'bi_danh') 
+      // and 'address' (or 'dia_chi') exist in Supabase.
+      const updateData = { name, born, death };
+      if (address) {
+          updateData.address = address;
+          updateData.dia_chi = address;
+      }
+      if (alias) {
+          updateData.alias = alias;
+          updateData.bi_danh = alias;
+      }
+
       const { error } = await supabase
         .from('members')
-        .update({ name, born, death, address, alias })
+        .update(updateData)
         .eq('id', id);
 
       if (error) throw error;
@@ -89,16 +107,24 @@ export const useFamilyData = (initialData = []) => {
     let newId = `new_${Date.now()}`;
     try {
       setUpdatingIds(prev => new Set(prev).add(newId));
+      
+      const insertData = {
+        id: newId,
+        name: data.name,
+        gender: data.gender,
+        parent_id: data.parentId || null,
+        spouse_id: data.spouseId || null,
+        role: data.role || null
+      };
+
+      if (data.alias) {
+        insertData.alias = data.alias;
+        insertData.bi_danh = data.alias;
+      }
+
       const { data: inserted, error } = await supabase
         .from('members')
-        .insert([{
-          id: newId,
-          name: data.name,
-          gender: data.gender,
-          parent_id: data.parentId || null,
-          spouse_id: data.spouseId || null,
-          role: data.role || null
-        }])
+        .insert([insertData])
         .select();
 
       if (error) throw error;
