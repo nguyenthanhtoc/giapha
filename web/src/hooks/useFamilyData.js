@@ -41,18 +41,14 @@ export const useFamilyData = (initialData = []) => {
   const handleUpdate = useCallback(async (id, name, born, death, address, alias) => {
     try {
       setUpdatingIds(prev => new Set(prev).add(id));
-      
-      // We try to update both naming conventions to be safe, 
-      // though typically you should use the one that exists in your DB.
-      // If the error persists, please ensure columns 'alias' (or 'bi_danh') 
-      // and 'address' (or 'dia_chi') exist in Supabase.
+      // Only send columns that are likely to exist. 
+      // The error logs confirmed 'address' is missing.
+      // We'll try 'dia_chi' and 'bi_danh' instead.
       const updateData = { name, born, death };
       if (address) {
-          updateData.address = address;
           updateData.dia_chi = address;
       }
       if (alias) {
-          updateData.alias = alias;
           updateData.bi_danh = alias;
       }
 
