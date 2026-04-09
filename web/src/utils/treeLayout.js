@@ -207,24 +207,20 @@ export const drawFamilyTree = ({
     const isSourceRoot = d.source.depth === 1;
     const isSourceSpecial = sourcePerson.name === 'Nguyễn Thanh Dung' || isSourceRoot;
     const sourceOffset = (65 * (isSourceSpecial ? 1.75 : 1.0)) / 2;
+    const targetOffset = 32.5;
 
-    const targetOffset = 32.5; // Standard node height / 2
+    const startY = ySource + sourceOffset;
+    const endY = yTarget - targetOffset;
 
-    // If source is hidden (Gen 14 or above) in filtered mode, 
-    // we still want to show a connection coming from the horizontal "sibling line" level.
+    // Special Case: Gen 15 siblings connection (when Gen 14 parent is hidden)
     if (showFromGen15 && d.source.depth < 5) {
-      const midY = (ySource + yTarget) / 2;
-      return `M${xSource},${midY} H${xTarget} V${yTarget}`;
+      const trunkY = endY - 40; // Relationship trunk 40px above the child node
+      return `M${xSource},${trunkY} H${xTarget} V${endY}`;
     }
 
-    // Use a smooth vertical link (Bezier curve)
-    return d3.linkVertical()
-      .x(d => d[0])
-      .y(d => d[1])
-      ({
-        source: [xSource, ySource + sourceOffset],
-        target: [xTarget, yTarget - targetOffset]
-      });
+    // Straight elbow connection (V -> H -> V)
+    const midY = (startY + endY) / 2;
+    return `M${xSource},${startY} V${midY} H${xTarget} V${endY}`;
   };
 
   g.append('g')
