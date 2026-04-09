@@ -73,8 +73,8 @@ export default function FamilyTree() {
     }
   }, [mergedData, updatingIds, isAdmin, selectedPerson, focusId, collapsedIds, showFromGen15]);
 
-  const handleAdminUpdate = async (id, name, born, death) => {
-    await handleUpdate(id, name, born, death);
+  const handleAdminUpdate = async (id, name, born, death, address) => {
+    await handleUpdate(id, name, born, death, address);
   };
 
   const handleAdminDelete = async (person) => {
