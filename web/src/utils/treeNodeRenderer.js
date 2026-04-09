@@ -42,6 +42,7 @@ export const renderNode = ({
     return measureText(`${label}${s.name}`, 14, 'bold');
   });
   const maxTextWidth = Math.max(nameWidth, ...spouseWidths, 0);
+  const defaultNodeWidth = 160;
   const nodeWidth = Math.max(defaultNodeWidth, maxTextWidth + 8);
 
   const isUpdating = updatingIds.has(person.id) || personSpouses.some(s => updatingIds.has(s.id));
