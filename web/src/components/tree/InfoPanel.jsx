@@ -17,11 +17,13 @@ export default function InfoPanel({
   const [editBorn, setEditBorn] = useState('');
   const [editDeath, setEditDeath] = useState('');
   const [editAddress, setEditAddress] = useState('');
+  const [editAlias, setEditAlias] = useState('');
   
   const [editSpouseName, setEditSpouseName] = useState('');
   const [editSpouseBorn, setEditSpouseBorn] = useState('');
   const [editSpouseDeath, setEditSpouseDeath] = useState('');
   const [editSpouseAddress, setEditSpouseAddress] = useState('');
+  const [editSpouseAlias, setEditSpouseAlias] = useState('');
   
   const [isSaving, setIsSaving] = useState(false);
 
@@ -33,18 +35,20 @@ export default function InfoPanel({
       setEditName(selectedPerson.name || '');
       setEditBorn(selectedPerson.born || '');
       setEditDeath(selectedPerson.death || '');
-      setEditAddress(selectedPerson.address || '');
+      setEditAlias(selectedPerson.alias || '');
     }
     if (spouse) {
       setEditSpouseName(spouse.name || '');
       setEditSpouseBorn(spouse.born || '');
       setEditSpouseDeath(spouse.death || '');
       setEditSpouseAddress(spouse.address || '');
+      setEditSpouseAlias(spouse.alias || '');
     } else {
       setEditSpouseName('');
       setEditSpouseBorn('');
       setEditSpouseDeath('');
       setEditSpouseAddress('');
+      setEditSpouseAlias('');
     }
     setIsSaving(false);
   }, [selectedPerson, spouse]);
@@ -59,11 +63,11 @@ export default function InfoPanel({
     setIsSaving(true);
     try {
       // Update main person
-      await onUpdate(selectedPerson.id, capitalizedName, editBorn, editDeath, editAddress);
+      await onUpdate(selectedPerson.id, capitalizedName, editBorn, editDeath, editAddress, editAlias);
       
       // Update spouse if exists
       if (spouse) {
-        await onUpdate(spouse.id, capitalizedSpouseName, editSpouseBorn, editSpouseDeath, editSpouseAddress);
+        await onUpdate(spouse.id, capitalizedSpouseName, editSpouseBorn, editSpouseDeath, editSpouseAddress, editSpouseAlias);
       }
       
       setSelectedPerson(null);
@@ -139,9 +143,29 @@ export default function InfoPanel({
               </h2>
             )}
 
-            <p className="text-[10px] text-amber-800 font-bold uppercase tracking-[0.2em] mb-4 border-b border-amber-800/10 pb-1 w-full text-center">
+            <p className="text-[10px] text-amber-800 font-bold uppercase tracking-[0.2em] mb-1 border-b border-amber-800/10 pb-1 w-full text-center">
               {selectedPerson.generation || selectedPerson.role || 'Thành viên'}
             </p>
+
+            {/* Display Alias if exists (Non-Admin mode or just as info) */}
+            {!isAdmin && selectedPerson.alias && (
+              <p className="text-sm font-spectral italic text-amber-900/70 mb-4">
+                ({selectedPerson.alias})
+              </p>
+            )}
+
+            {isAdmin && (
+               <div className="w-full mb-4">
+                  <span className="text-amber-900/40 text-[9px] uppercase tracking-widest font-bold block text-center mb-1">Bí danh / Tên tự</span>
+                  <input
+                    type="text"
+                    value={editAlias}
+                    onChange={(e) => setEditAlias(e.target.value)}
+                    className="text-center bg-white/60 text-red-900 border border-amber-800/20 rounded py-1 text-sm italic w-full outline-none font-spectral focus:border-amber-800/40"
+                    placeholder="(Nếu có)"
+                  />
+               </div>
+            )}
 
             {/* Main Person Fields */}
             <div className="w-full grid grid-cols-2 gap-3 mb-3">
@@ -174,10 +198,26 @@ export default function InfoPanel({
                    </div>
                 ) : (
                   spouse && (
-                    <h3 className="text-lg sm:text-xl font-black text-red-900 uppercase tracking-wide text-center font-spectral leading-tight mb-2">
-                       {spouse.gender === 'female' ? 'Vợ: ' : 'Chồng: '}{spouse.name}
-                    </h3>
+                    <div className="text-center mb-2">
+                      <h3 className="text-lg sm:text-xl font-black text-red-900 uppercase tracking-wide font-spectral leading-tight">
+                        {spouse.gender === 'female' ? 'Vợ: ' : 'Chồng: '}{spouse.name}
+                      </h3>
+                      {spouse.alias && <p className="text-xs italic font-spectral text-amber-900/60">({spouse.alias})</p>}
+                    </div>
                   )
+                )}
+
+                {isAdmin && (
+                   <div className="w-full mb-3">
+                      <span className="text-amber-900/40 text-[9px] uppercase tracking-widest font-bold block text-center mb-1">Bí danh Phối ngẫu</span>
+                      <input
+                        type="text"
+                        value={editSpouseAlias}
+                        onChange={(e) => setEditSpouseAlias(e.target.value)}
+                        className="text-center bg-white/60 text-red-900 border border-amber-800/20 rounded py-1 text-sm italic w-full outline-none font-spectral focus:border-amber-800/40"
+                        placeholder="(Bí danh vợ/chồng)"
+                      />
+                   </div>
                 )}
 
                 {/* Show spouse details only if spouse exists or we are in admin mode to add them */}

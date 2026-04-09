@@ -493,14 +493,19 @@ export const drawFamilyTree = ({
         deleteBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').attr('font-weight', 'bold').text('✕');
     }
 
-    // Calculate vertical positions for centering (Name + Spouses)
+    // Calculate vertical positions for centering (Name + Alias? + Spouses)
+    const hasAlias = person.alias && person.alias.trim() !== '';
     const totalSpouses = personSpouses.length;
     const rowHeight = 14; 
-    const nameDy = (5 - (totalSpouses * rowHeight) / 2) * scaleFactor;
+    const spacing = 4;
+    
+    // Total lines including potential alias and spouses
+    const totalRows = 1 + (hasAlias ? 1 : 0) + totalSpouses;
+    let currentDy = (5 - ((totalRows - 1) * (rowHeight + spacing)) / 2) * scaleFactor;
     
     // Main person name
     nodeGroup.append('text')
-      .attr('dy', nameDy)
+      .attr('dy', currentDy)
       .attr('text-anchor', 'middle')
       .attr('fill', isSpecialRoot ? '#78350f' : '#1c1917')
       .attr('font-size', isSpecialRoot ? '28px' : '14px')
@@ -508,14 +513,29 @@ export const drawFamilyTree = ({
       .attr('class', isSpecialRoot ? 'font-spectral' : '')
       .text(person.name);
 
+    // Alias if exists
+    if (hasAlias) {
+      currentDy += (rowHeight + spacing) * scaleFactor;
+      nodeGroup.append('text')
+        .attr('dy', currentDy)
+        .attr('text-anchor', 'middle')
+        .attr('fill', isSpecialRoot ? '#92400e' : '#44403c')
+        .attr('font-size', isSpecialRoot ? '22px' : '11px')
+        .attr('font-weight', 'medium')
+        .attr('font-style', 'italic')
+        .attr('class', isSpecialRoot ? 'font-spectral' : '')
+        .text(`(${person.alias})`);
+    }
+
     // Spouse names (multi-line)
     if (totalSpouses > 0) {
       personSpouses.forEach((s, i) => {
+        currentDy += (rowHeight + spacing) * scaleFactor;
         const label = s.gender === 'female' ? 'Vợ: ' : 'Chồng: ';
-        const spouseColor = s.gender === 'female' ? '#be185d' : '#1e40af'; // Pink/Red for wife, Blue for husband-spouse
+        const spouseColor = s.gender === 'female' ? '#be185d' : '#1e40af'; 
         
         nodeGroup.append('text')
-          .attr('dy', nameDy + (i + 1) * (rowHeight + 4) * scaleFactor) // Increased gap slightly for larger font
+          .attr('dy', currentDy)
           .attr('text-anchor', 'middle')
           .attr('fill', isSpecialRoot ? '#92400e' : spouseColor)
           .attr('font-size', isSpecialRoot ? '28px' : '14px')

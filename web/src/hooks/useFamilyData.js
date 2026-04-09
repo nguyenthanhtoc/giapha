@@ -35,12 +35,12 @@ export const useFamilyData = (initialData = []) => {
 
   const [updatingIds, setUpdatingIds] = useState(new Set());
 
-  const handleUpdate = useCallback(async (id, name, born, death, address) => {
+  const handleUpdate = useCallback(async (id, name, born, death, address, alias) => {
     try {
       setUpdatingIds(prev => new Set(prev).add(id));
       const { error } = await supabase
         .from('members')
-        .update({ name, born, death, address })
+        .update({ name, born, death, address, alias })
         .eq('id', id);
 
       if (error) throw error;
