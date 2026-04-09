@@ -481,7 +481,7 @@ export const drawFamilyTree = ({
       .attr('text-anchor', 'middle')
       .attr('fill', isSpecialRoot ? '#78350f' : '#1c1917')
       .attr('font-size', isSpecialRoot ? '28px' : '14px')
-      .attr('font-weight', 'black')
+      .attr('font-weight', 'bold')
       .attr('class', isSpecialRoot ? 'font-spectral' : '')
       .text(person.name);
 
