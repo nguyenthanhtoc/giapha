@@ -1,4 +1,8 @@
 import * as d3 from 'd3';
+import { prepareTreeData } from './treeDataHelpers';
+import { renderLinks } from './treeLinkRenderer';
+import { renderNode } from './treeNodeRenderer';
+import { setupZoom } from './treeZoomHandler';
 
 export const drawFamilyTree = ({ 
   svgRef, 
@@ -29,114 +33,12 @@ export const drawFamilyTree = ({
   // Clear previous content
   svgElement.selectAll('*').remove();
 
-  const spousesMap = {};
-  data.forEach(person => {
-    if (person.spouseId) {
-      if (!spousesMap[person.spouseId]) spousesMap[person.spouseId] = [];
-      spousesMap[person.spouseId].push(person);
-    }
-  });
-
-  const treeNodes = data.filter(person => !person.spouseId);
-
-  // Virtual Root to handle multiple roots
-  const virtualRootId = 'VIRTUAL_ROOT_HIDDEN';
-  const dataWithVirtualRoot = [
-    { id: virtualRootId, parentId: null, name: 'VIRTUAL' },
-    ...treeNodes.map(node => ({
-        ...node,
-        parentId: node.parentId && treeNodes.some(n => n.id === node.parentId) 
-          ? node.parentId 
-          : virtualRootId
-    }))
-  ];
-
-  const stratify = d3.stratify()
-    .id(d => d.id)
-    .parentId(d => d.parentId);
-
-  const rootFull = stratify(dataWithVirtualRoot);
-  let root = rootFull;
-
-  if (focusId) {
-    const focusNode = rootFull.descendants().find(d => d.id === focusId);
-    if (focusNode) {
-      root = focusNode;
-      // We don't detach it, d3.tree will just lay out the focusNode's subtree
-    }
-  }
-
-  // Apply collapses
-  if (collapsedIds && collapsedIds.size > 0) {
-    root.descendants().forEach(d => {
-      if (collapsedIds.has(d.id)) {
-        d._children = d.children;
-        d.children = null;
-      }
-    });
-  }
-
-  const treeLayout = d3.tree().nodeSize([200, 192]); // Reduced spacing by 20% for a more compact view
-  treeLayout(root);
-
-  const generationLabels = [
-    "Đệ Thập Nhất Thế Tổ",
-    "Đệ Thập Nhị Thế Tổ",
-    "Đệ Thập Tam Thế Tổ",
-    "Đệ Thập Tứ Thế",
-    "Đệ Thập Ngũ Thế",
-    "Đệ Thập Lục Thế",
-    "Đệ Thập Thất Thế",
-    "Đệ Thập Bát Thế",
-    "Đệ Thập Cửu Thế"
-  ];
+  // 1. Prepare Data
+  const { descendants, links, spousesMap, virtualRootId } = prepareTreeData(data, collapsedIds, focusId, showFromGen15);
 
   const g = svgElement.append('g').attr('class', 'tree-viewport');
 
-  const zoom = d3.zoom()
-    .scaleExtent([0.1, 5])
-    .on('zoom', (event) => {
-      g.attr('transform', event.transform);
-      if (onZoom) onZoom(event.transform.k);
-    });
-
-  let links = root.links().filter(l => l.source.id !== virtualRootId);
-  let descendants = root.descendants().filter(d => d.id !== virtualRootId);
-
-  // Add generation info to nodes (First pass to get all info)
-  descendants.forEach(d => {
-    if (d.depth > 0) {
-      const genIndex = d.depth - 1;
-      const genLabel = generationLabels[genIndex] || `Thế Hệ ${d.depth + 10}`;
-      d.data.generation = genLabel;
-      
-      // Also apply to spouses
-      const personSpouses = spousesMap[d.data.id] || [];
-      personSpouses.forEach(s => {
-        s.generation = genLabel;
-      });
-    }
-  });
-
-  // Apply generation filtering if flag is set
-  if (showFromGen15) {
-    const minDepth = 5;
-    // We keep nodes at depth 5 and below
-    descendants = descendants.filter(d => d.depth >= minDepth);
-    // Include links where the TARGET is at least minDepth. 
-    // This allows identifying siblings via their common parent (even if parent is hidden).
-    links = links.filter(l => l.target.depth >= minDepth);
-    
-    // Shift Y coordinates up to remove the gap
-    // Depth 5 is at d.depth * 200. We want to shift it to start near 0.
-    const offsetY = minDepth * 200 - 100; // Leave a little space at top
-    descendants.forEach(d => {
-      d.y -= offsetY;
-    });
-  }
-
-
-  // Highlight logic
+  // 2. Highlight logic
   const selectedId = selectedPerson?.id;
   const relatedIds = new Set();
   const selectedNode = selectedId ? descendants.find(d => d.id === selectedId) : null;
@@ -150,409 +52,45 @@ export const drawFamilyTree = ({
     });
   }
 
-  // Handle Zoom persistence and transitions
-  const currentTransform = d3.zoomTransform(svgRef.current);
-  const isFocusBack = !focusId && svgRef.current.__lastFocusId;
-  const isFocusNew = focusId && svgRef.current.__lastFocusId !== focusId;
-  const isSelectedNew = selectedId && svgRef.current.__lastSelectedId !== selectedId;
-  const shouldResetView = isFirstLoad || isFocusNew || isFocusBack || isSelectedNew;
+  // 3. Setup Zoom
+  const zoom = setupZoom({ 
+    svgElement, svgRef, g, onZoom, height, width, focusId, descendants, selectedNode, isFirstLoad, selectedId 
+  });
 
-  if (shouldResetView) {
-    const targetNode = isSelectedNew ? selectedNode : (descendants.find(d => d.id === (focusId || descendants[0]?.id)) || descendants[0]);
-    if (targetNode) {
-      let targetScale;
-      let targetY = height / 2;
-
-      if (isFirstLoad) {
-          targetScale = 0.4;
-          targetY = height / 3; // Position at 1/3 from top
-      } else if (isSelectedNew || focusId) {
-          const isMobile = width < 640;
-          const nodeBaseWidth = 160;
-          targetScale = isMobile ? (width / 5) / nodeBaseWidth : (width / 10) / nodeBaseWidth;
-      } else {
-          targetScale = 0.85;
-      }
-
-      const targetTransform = d3.zoomIdentity
-        .translate(width / 2 - targetNode.x * targetScale, targetY - targetNode.y * targetScale)
-        .scale(targetScale);
-      
-      if (isFirstLoad) {
-        svgElement.call(zoom.transform, targetTransform);
-        g.attr('transform', targetTransform);
-        if (onZoom) onZoom(targetScale);
-      } else {
-        svgElement.transition().duration(800).ease(d3.easeCubicInOut)
-          .call(zoom.transform, targetTransform)
-          .on('end', () => { if (onZoom) onZoom(targetScale); });
-      }
-    }
-  } else {
-    // Regular update (like collapse/expand), keep the camera stable
-    svgElement.call(zoom.transform, currentTransform);
-    g.attr('transform', currentTransform);
-  }
-  
-  svgRef.current.__lastFocusId = focusId;
-  svgRef.current.__lastSelectedId = selectedId;
-
-  svgElement.call(zoom);
   svgElement.on('click', () => onSelectPerson(null));
 
-  const linkGenerator = d => {
-    const xSource = d.source.x, ySource = d.source.y;
-    const xTarget = d.target.x, yTarget = d.target.y;
-    const sourcePerson = d.source.data;
-    const isSourceRoot = d.source.depth === 1;
-    const isSourceSpecial = sourcePerson.name === 'Nguyễn Thanh Dung' || isSourceRoot;
-    const sourceOffset = (65 * (isSourceSpecial ? 1.75 : 1.0)) / 2;
-    const targetOffset = 32.5;
+  // 4. Draw Links
+  renderLinks({ g, links, selectedId, relatedIds, showFromGen15 });
 
-    const startY = ySource + sourceOffset;
-    const endY = yTarget - targetOffset;
-
-    // Special Case: Gen 15 siblings connection (when Gen 14 parent is hidden)
-    if (showFromGen15 && d.source.depth < 5) {
-      const trunkY = endY - 40; // Relationship trunk 40px above the child node
-      return `M${xSource},${trunkY} H${xTarget} V${endY}`;
-    }
-
-    // Straight elbow connection (V -> H -> V)
-    const midY = (startY + endY) / 2;
-    return `M${xSource},${startY} V${midY} H${xTarget} V${endY}`;
-  };
-
-  g.append('g')
-    .attr('fill', 'none')
-    .attr('stroke', '#a16207')
-    .attr('stroke-opacity', 0.5)
-    .attr('stroke-width', 1.5)
-    .selectAll('path')
-    .data(links)
-    .join('path')
-    .attr('d', linkGenerator)
-    .attr('stroke', d => {
-        if (!selectedId) return '#a16207';
-        const isRelated = relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
-        return isRelated ? '#92400e' : '#d1d5db';
-    })
-    .attr('stroke-opacity', d => {
-        if (!selectedId) return 0.5;
-        const isRelated = relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
-        return isRelated ? 0.9 : 0.2;
-    })
-    .attr('stroke-width', d => {
-        if (!selectedId) return 1.5;
-        const isRelated = relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
-        return isRelated ? 3 : 1;
-    });
-
+  // 5. Draw Nodes
   const node = g.append('g')
     .selectAll('g')
     .data(descendants)
     .join('g')
     .attr('transform', d => `translate(${d.x},${d.y})`);
 
-  const defaultNodeWidth = 160, nodeHeight = 65;
-
-  // Measurement helper
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const measureText = (text, size, weight) => {
-    try {
-      ctx.font = `${weight} ${size}px sans-serif`;
-      return ctx.measureText(text).width;
-    } catch (e) {
-      return text.length * (weight === 'bold' ? 8.5 : 7);
-    }
-  };
-
   node.each(function (d) {
-    const gNode = d3.select(this);
-    const person = d.data;
-    const personSpouses = spousesMap[person.id] || [];
-
-    // Dynamic width calculation with 8px padding
-    const nameWidth = measureText(person.name, 14, 'bold');
-    const spouseWidths = personSpouses.map(s => {
-      const label = s.gender === 'female' ? 'Vợ: ' : 'Chồng: ';
-      return measureText(`${label}${s.name}`, 14, 'bold');
+    renderNode({
+      gNode: d3.select(this),
+      d,
+      spousesMap,
+      updatingIds,
+      selectedId,
+      relatedIds,
+      isAdmin,
+      focusId,
+      collapsedIds,
+      onSelectPerson,
+      onShowDetails,
+      onFocus,
+      onToggleCollapse,
+      onQuickAddChild,
+      onQuickAddSpouse,
+      onQuickDelete,
+      svgElement,
+      data,
+      virtualRootId
     });
-    const maxTextWidth = Math.max(nameWidth, ...spouseWidths, 0);
-    const nodeWidth = Math.max(defaultNodeWidth, maxTextWidth + 8); // 4px padding on each side
-
-    const isUpdating = updatingIds.has(person.id) || personSpouses.some(s => updatingIds.has(s.id));
-
-    const isSelected = person.id === selectedId;
-    const isRelated = selectedId && relatedIds.has(person.id);
-    const isFaded = selectedId && !isSelected && !isRelated;
-
-    // Node Alive Logic: If main person OR any spouse is alive, the whole node is "alive" (blue)
-    const nodeIsAlive = person.isAlive || personSpouses.some(s => s.isAlive);
-
-    const nodeGroup = gNode.append('g')
-      .attr('class', `person-node ${isUpdating ? 'animate-pulse' : ''}`)
-      .style('opacity', isFaded ? 0.35 : 1)
-      .on('click', (event) => {
-        event.stopPropagation();
-        onSelectPerson(person);
-      })
-      .style('cursor', isUpdating ? 'wait' : 'pointer');
-
-    const filterId = `shadow-${person.id}`;
-    const selectedFilterId = `selected-glow-${person.id}`;
-    
-    const defs = svgElement.select('defs').node() ? svgElement.select('defs') : svgElement.append('defs');
-    
-    defs.append('filter').attr('id', filterId)
-      .append('feDropShadow').attr('dx', 0).attr('dy', 4).attr('stdDeviation', 4)
-      .attr('flood-color', '#000000').attr('flood-opacity', 0.15);
-
-    if (isSelected) {
-      defs.append('filter').attr('id', selectedFilterId)
-        .append('feDropShadow').attr('dx', 0).attr('dy', 0).attr('stdDeviation', 6)
-        .attr('flood-color', '#dc2626').attr('flood-opacity', 0.5);
-    }
-
-    // Special pattern for root node
-    const isRootNode = d.depth === 1;
-    const isSpecialRoot = person.name === 'Nguyễn Thanh Dung' || isRootNode;
-    if (isSpecialRoot) {
-      const pattern = defs.append('pattern')
-        .attr('id', 'pattern-root')
-        .attr('width', 40)
-        .attr('height', 40)
-        .attr('patternUnits', 'userSpaceOnUse');
-      
-      pattern.append('rect')
-        .attr('width', 40).attr('height', 40)
-        .attr('fill', nodeIsAlive ? '#f0f9ff' : '#fef3c7'); // Background of pattern
-
-      pattern.append('path')
-        .attr('d', 'M0 20 Q10 10 20 20 T40 20 M20 0 Q30 10 20 20 T20 40')
-        .attr('fill', 'none')
-        .attr('stroke', nodeIsAlive ? '#0369a1' : '#d97706')
-        .attr('stroke-width', 1.5)
-        .attr('opacity', 0.15);
-        
-      pattern.append('circle')
-        .attr('cx', 20).attr('cy', 20).attr('r', 3)
-        .attr('fill', nodeIsAlive ? '#0369a1' : '#d97706')
-        .attr('opacity', 0.2);
-    }
-
-    const scaleFactor = isSpecialRoot ? 1.75 : 1.0;
-    const finalNodeWidth = nodeWidth * scaleFactor;
-    const finalNodeHeight = nodeHeight * scaleFactor;
-
-    nodeGroup.append('rect')
-      .attr('x', -finalNodeWidth / 2).attr('y', -finalNodeHeight / 2)
-      .attr('width', finalNodeWidth).attr('height', finalNodeHeight)
-      .attr('rx', 8 * scaleFactor)
-      .attr('fill', d => {
-          if (isSpecialRoot) return 'url(#pattern-root)';
-          if (isSelected) return nodeIsAlive ? '#f0f9ff' : (person.gender === 'male' ? '#fff7ed' : '#fff1f2');
-          if (nodeIsAlive) return person.gender === 'male' ? '#f0f9ff' : '#fdf4ff'; // Sky blue for male, Light purple/blue-ish pink for female?
-          if (isRelated) return person.gender === 'male' ? '#fefce8' : '#fff1f2';
-          return person.gender === 'male' ? '#fffbeb' : '#fdf2f8';
-      })
-      .attr('stroke', d => {
-          if (isSpecialRoot) return nodeIsAlive ? '#0369a1' : '#92400e'; // Root specific border
-          if (isSelected) return '#dc2626'; 
-          if (nodeIsAlive) return person.gender === 'male' ? '#0369a1' : '#c026d3'; // Blue vs Fuchsia
-          if (isRelated) return '#b45309'; 
-          return person.gender === 'male' ? '#b45309' : '#be185d';
-      })
-      .attr('stroke-width', isSpecialRoot ? 4 : (isSelected ? 3.5 : (isRelated ? 2.5 : 1.5)))
-      .attr('filter', isSelected ? `url(#${selectedFilterId})` : (isUpdating ? null : `url(#${filterId})`));
-
-    // Collapse/Info Buttons for EVERYONE when selected
-    if (isSelected && !isUpdating) {
-        // Info Button (Top Left)
-        const infoBtn = nodeGroup.append('g')
-          .attr('class', 'view-action-btn')
-          .attr('transform', `translate(${finalNodeWidth / 2 - 15}, ${-finalNodeHeight / 2 - 12})`)
-          .style('cursor', 'pointer')
-          .on('click', (e) => {
-              e.stopPropagation();
-              onShowDetails();
-          });
-        
-        infoBtn.append('circle').attr('r', 10).attr('fill', '#92400e').attr('stroke', '#fff').attr('stroke-width', 1.5);
-        infoBtn.append('text')
-          .attr('dy', 4)
-          .attr('text-anchor', 'middle')
-          .attr('fill', '#fff')
-          .attr('font-size', '12px')
-          .attr('font-weight', 'bold')
-          .text('i');
-
-        // Go to Parent Button (Top Left)
-        if (person.parentId && person.parentId !== virtualRootId) {
-            const parentBtn = nodeGroup.append('g')
-              .attr('class', 'view-action-btn')
-              .attr('transform', `translate(${-finalNodeWidth / 2 + 15}, ${-finalNodeHeight / 2 - 12})`)
-              .style('cursor', 'pointer')
-              .on('click', (e) => {
-                  e.stopPropagation();
-                  onSelectPerson(data.find(p => p.id === person.parentId));
-              });
-            
-            parentBtn.append('circle').attr('r', 10).attr('fill', '#4f46e5').attr('stroke', '#fff').attr('stroke-width', 1.5);
-            parentBtn.append('text')
-              .attr('dy', 4)
-              .attr('text-anchor', 'middle')
-              .attr('fill', '#fff')
-              .attr('font-size', '12px')
-              .attr('font-weight', 'bold')
-              .text('↑');
-        }
-
-        // Collapse/Focus Up Button (Top Right)
-        const isFocused = focusId === person.id;
-        const focusBtn = nodeGroup.append('g')
-          .attr('class', 'view-action-btn')
-          .attr('transform', `translate(0, ${-finalNodeHeight / 2 - 12})`)
-          .style('cursor', 'pointer')
-          .on('click', (e) => {
-              e.stopPropagation();
-              onFocus(person.id);
-          });
-        
-        focusBtn.append('circle').attr('r', 10).attr('fill', isFocused ? '#1e40af' : '#64748b').attr('stroke', '#fff').attr('stroke-width', 1.5);
-        focusBtn.append('text')
-          .attr('dy', 4)
-          .attr('text-anchor', 'middle')
-          .attr('fill', '#fff')
-          .attr('font-size', '12px')
-          .attr('font-weight', 'bold')
-          .text(isFocused ? '+' : '−');
-        
-        // Add a tooltip-like text if hovered? (optional, for now skip to keep clean)
-
-        // Collapse/Expand Down Button (Bottom Center-Right)
-        const isCollapsed = collapsedIds.has(person.id);
-        const collapseBtn = nodeGroup.append('g')
-          .attr('class', 'view-action-btn')
-          .attr('transform', `translate(0, ${finalNodeHeight / 2 + 12})`)
-          .style('cursor', 'pointer')
-          .on('click', (e) => {
-              e.stopPropagation();
-              onToggleCollapse(person.id);
-          });
-        
-        collapseBtn.append('circle').attr('r', 10).attr('fill', isCollapsed ? '#15803d' : '#64748b').attr('stroke', '#fff').attr('stroke-width', 1.5);
-        collapseBtn.append('text')
-          .attr('dy', 4)
-          .attr('text-anchor', 'middle')
-          .attr('fill', '#fff')
-          .attr('font-size', '12px')
-          .attr('font-weight', 'bold')
-          .text(isCollapsed ? '+' : '−');
-    }
-
-    if (isAdmin && !isUpdating) {
-        // Child add button (Bottom)
-        // Child add button (Bottom Left)
-        const childBtn = nodeGroup.append('g')
-          .attr('class', 'quick-add-btn')
-          .attr('transform', `translate(${-finalNodeWidth / 2 + 15}, ${finalNodeHeight / 2 + 12})`)
-          .style('cursor', 'copy')
-          .on('click', (e) => {
-              e.stopPropagation();
-              onQuickAddChild(person);
-          });
-        
-        childBtn.append('circle').attr('r', 10).attr('fill', '#166534').attr('stroke', '#fff').attr('stroke-width', 1.5);
-        childBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '14px').attr('font-weight', 'bold').text('+');
-
-        // Spouse add button (Right)
-        const spouseBtn = nodeGroup.append('g')
-          .attr('class', 'quick-add-btn')
-          .attr('transform', `translate(${finalNodeWidth / 2 + 12}, 0)`)
-          .style('cursor', 'copy')
-          .on('click', (e) => {
-              e.stopPropagation();
-              onQuickAddSpouse(person);
-          });
-        
-        spouseBtn.append('circle').attr('r', 10).attr('fill', '#be123c').attr('stroke', '#fff').attr('stroke-width', 1.5);
-        spouseBtn.append('text').attr('dy', 4.5).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').text('♥');
-
-        // Quick delete button (Top Left)
-        const deleteBtn = nodeGroup.append('g')
-          .attr('class', 'quick-delete-btn')
-          .attr('transform', `translate(${-finalNodeWidth / 2 + 15}, ${-finalNodeHeight / 2 - 12})`)
-          .style('cursor', 'pointer')
-          .on('click', (e) => {
-              e.stopPropagation();
-              onQuickDelete(person);
-          });
-        
-        deleteBtn.append('circle').attr('r', 10).attr('fill', '#991b1b').attr('stroke', '#fff').attr('stroke-width', 1.5);
-        deleteBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').attr('font-weight', 'bold').text('✕');
-    }
-
-    // Calculate vertical positions for centering (Name + Alias? + Spouses)
-    const hasAlias = person.alias && person.alias.trim() !== '';
-    const totalSpouses = personSpouses.length;
-    const rowHeight = 14; 
-    const spacing = 4;
-    
-    // Total lines including potential alias and spouses
-    const totalRows = 1 + (hasAlias ? 1 : 0) + totalSpouses;
-    let currentDy = (5 - ((totalRows - 1) * (rowHeight + spacing)) / 2) * scaleFactor;
-    
-    // Main person name
-    nodeGroup.append('text')
-      .attr('dy', currentDy)
-      .attr('text-anchor', 'middle')
-      .attr('fill', isSpecialRoot ? '#78350f' : '#1c1917')
-      .attr('font-size', isSpecialRoot ? '28px' : '14px')
-      .attr('font-weight', 'bold')
-      .attr('class', isSpecialRoot ? 'font-spectral' : '')
-      .text(person.name);
-
-    // Alias if exists
-    if (hasAlias) {
-      currentDy += (rowHeight + spacing) * scaleFactor;
-      nodeGroup.append('text')
-        .attr('dy', currentDy)
-        .attr('text-anchor', 'middle')
-        .attr('fill', isSpecialRoot ? '#92400e' : '#44403c')
-        .attr('font-size', isSpecialRoot ? '22px' : '11px')
-        .attr('font-weight', 'medium')
-        .attr('font-style', 'italic')
-        .attr('class', isSpecialRoot ? 'font-spectral' : '')
-        .text(`(${person.alias})`);
-    }
-
-    // Spouse names (multi-line)
-    if (totalSpouses > 0) {
-      personSpouses.forEach((s, i) => {
-        currentDy += (rowHeight + spacing) * scaleFactor;
-        const label = s.gender === 'female' ? 'Vợ: ' : 'Chồng: ';
-        const spouseColor = s.gender === 'female' ? '#be185d' : '#1e40af'; 
-        
-        nodeGroup.append('text')
-          .attr('dy', currentDy)
-          .attr('text-anchor', 'middle')
-          .attr('fill', isSpecialRoot ? '#92400e' : spouseColor)
-          .attr('font-size', isSpecialRoot ? '28px' : '14px')
-          .attr('font-weight', 'bold')
-          .attr('class', isSpecialRoot ? 'font-spectral' : '')
-          .text(`${label}${s.name}`);
-      });
-    }
-
-    if (isUpdating) {
-      nodeGroup.append('circle')
-        .attr('cx', nodeWidth / 2 - 10).attr('cy', -nodeHeight / 2 + 10)
-        .attr('r', 4).attr('fill', '#d97706')
-        .append('animate')
-        .attr('attributeName', 'opacity').attr('values', '0;1;0').attr('dur', '1s').attr('repeatCount', 'indefinite');
-    }
   });
 
   return { zoom, g, svgElement };

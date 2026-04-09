@@ -30,7 +30,10 @@ async function seed() {
         highlight BOOLEAN DEFAULT FALSE,
         highlight_desc TEXT,
         born TEXT,
-        death TEXT
+        death TEXT,
+        is_alive BOOLEAN DEFAULT TRUE,
+        bi_danh TEXT,
+        dia_chi TEXT
       );
     `;
     console.log('Members table created/exists.');
@@ -58,7 +61,7 @@ async function seed() {
       const merged = { ...member, ...override };
 
       await sql`
-        INSERT INTO members (id, name, gender, role, highlight, highlight_desc, born, death)
+        INSERT INTO members (id, name, gender, role, highlight, highlight_desc, born, death, is_alive, bi_danh, dia_chi)
         VALUES (
           ${merged.id}, 
           ${merged.name}, 
@@ -67,7 +70,10 @@ async function seed() {
           ${merged.highlight || false}, 
           ${merged.highlightDesc || null}, 
           ${merged.born || null}, 
-          ${merged.death || null}
+          ${merged.death || null},
+          ${merged.isAlive !== undefined ? merged.isAlive : true},
+          ${merged.alias || merged.bi_danh || null},
+          ${merged.address || merged.dia_chi || null}
         )
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
@@ -76,7 +82,10 @@ async function seed() {
           highlight = EXCLUDED.highlight,
           highlight_desc = EXCLUDED.highlight_desc,
           born = EXCLUDED.born,
-          death = EXCLUDED.death
+          death = EXCLUDED.death,
+          is_alive = EXCLUDED.is_alive,
+          bi_danh = EXCLUDED.bi_danh,
+          dia_chi = EXCLUDED.dia_chi
       `;
     }
 
