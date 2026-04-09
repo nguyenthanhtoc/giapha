@@ -26,6 +26,15 @@ export default function InfoPanel({
   const spouses = allMembers?.filter(m => m.spouseId === selectedPerson?.id) || [];
   const spouse = spouses[0];
 
+  useEffect(() => {
+    if (selectedPerson) {
+      setEditName(selectedPerson.name || '');
+      setEditBorn(selectedPerson.born || '');
+      setEditDeath(selectedPerson.death || '');
+      setEditAddress(selectedPerson.address || '');
+      setEditAlias(selectedPerson.alias || '');
+    }
+
     const spouseList = spouses.map(s => ({
       id: s.id,
       name: s.name || '',
@@ -42,10 +51,7 @@ export default function InfoPanel({
 
   const handleSave = async () => {
     const capitalizedName = capitalizeName(editName);
-    const capitalizedSpouseName = capitalizeName(editSpouseName);
-    
     setEditName(capitalizedName);
-    setEditSpouseName(capitalizedSpouseName);
 
     setIsSaving(true);
     try {
