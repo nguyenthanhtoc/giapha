@@ -19,6 +19,7 @@ export default function InfoPanel({
   const [editDeath, setEditDeath] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const [editAlias, setEditAlias] = useState('');
+  const [editDacVi, setEditDacVi] = useState('');
   const [editIsAlive, setEditIsAlive] = useState(true);
   
   const [editSpouseStates, setEditSpouseStates] = useState([]); // Array of spouse objects for editing
@@ -28,12 +29,20 @@ export default function InfoPanel({
   const spouses = allMembers?.filter(m => m.spouseId === selectedPerson?.id) || [];
 
   useEffect(() => {
+    if (!selectedPerson) return;
+    const handleKeyDown = (e) => { if (e.key === 'Escape') setSelectedPerson(null); };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPerson, setSelectedPerson]);
+
+  useEffect(() => {
     if (selectedPerson) {
       setEditName(selectedPerson.name || '');
       setEditBorn(selectedPerson.born || '');
       setEditDeath(selectedPerson.death || '');
       setEditAddress(selectedPerson.address || '');
       setEditAlias(selectedPerson.alias || '');
+      setEditDacVi(selectedPerson.dacVi || '');
       setEditIsAlive(selectedPerson.isAlive !== false);
     }
 
@@ -59,8 +68,8 @@ export default function InfoPanel({
     setIsSaving(true);
     try {
       // Update main person
-      await onUpdate(selectedPerson.id, capitalizedName, editBorn, editDeath, editAddress, editAlias, editIsAlive);
-      
+      await onUpdate(selectedPerson.id, capitalizedName, editBorn, editDeath, editAddress, editAlias, editIsAlive, editDacVi);
+
       // Update all spouses — share the same address as the main person
       for (const s of editSpouseStates) {
         const capsName = capitalizeName(s.name);
@@ -142,13 +151,20 @@ export default function InfoPanel({
 
             {/* Display Alias if exists */}
             {!isAdmin && selectedPerson.alias && (
-              <p className="text-sm font-spectral italic text-amber-900/70 mb-4">
+              <p className="text-sm font-spectral italic text-amber-900/70 mb-1">
                 ({selectedPerson.alias})
               </p>
             )}
 
+            {/* Display Đắc Vị if exists */}
+            {!isAdmin && selectedPerson.dacVi && (
+              <p className="text-xs font-bold text-amber-800 mb-4 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                {selectedPerson.dacVi}
+              </p>
+            )}
+
             {isAdmin && (
-               <div className="w-full mb-4">
+               <div className="w-full mb-2">
                   <span className="text-amber-900/40 text-[9px] uppercase tracking-widest font-bold block text-center mb-1">Bí danh / Tên tự</span>
                   <input
                     type="text"
@@ -156,6 +172,19 @@ export default function InfoPanel({
                     onChange={(e) => setEditAlias(e.target.value)}
                     className="text-center bg-white/60 text-red-900 border border-amber-800/20 rounded py-1 text-sm italic w-full outline-none font-spectral focus:border-amber-800/40"
                     placeholder="(Nếu có)"
+                  />
+               </div>
+            )}
+
+            {isAdmin && (
+               <div className="w-full mb-4">
+                  <span className="text-amber-900/40 text-[9px] uppercase tracking-widest font-bold block text-center mb-1">Đắc Vị</span>
+                  <input
+                    type="text"
+                    value={editDacVi}
+                    onChange={(e) => setEditDacVi(e.target.value)}
+                    className="text-center bg-white/60 text-red-900 border border-amber-800/20 rounded py-1 text-sm w-full outline-none font-spectral focus:border-amber-800/40"
+                    placeholder="(Chức vị, danh hiệu...)"
                   />
                </div>
             )}

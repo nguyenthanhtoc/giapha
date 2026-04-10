@@ -28,6 +28,9 @@ async function migrate() {
     console.log('Adding dia_chi...');
     await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS dia_chi TEXT;`.catch(e => console.log('dia_chi likely exists or error:', e.message));
 
+    console.log('Adding dac_vi...');
+    await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS dac_vi TEXT;`.catch(e => console.log('dac_vi likely exists or error:', e.message));
+
     console.log('--- Migration complete! ---');
   } catch (err) {
     console.error('Migration failed:', err);

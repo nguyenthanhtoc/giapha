@@ -224,6 +224,7 @@ const renderActionButtons = ({ nodeGroup, isSelected, isUpdating, isAdmin, final
 
 const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor, dynamicNodeHeight, finalNodeWidth }) => {
     const hasAlias = !!(person.alias && person.alias.trim());
+    const hasDacVi = !!(person.dacVi && person.dacVi.trim());
     // Address shown once at the bottom: use main person's address (shared for whole family)
     const sharedAddress = (person.address && person.address.trim()) ? person.address.trim() : null;
     const hasAddress = !!sharedAddress;
@@ -243,6 +244,7 @@ const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, sc
     // This MUST match the calculation in treeDataHelpers.js (minus verticalPadding).
     let totalH = NAME_H;
     if (hasAlias) totalH += GAP + SUB_H;
+    if (hasDacVi) totalH += GAP + SUB_H;
     if (mainLifespan) totalH += GAP + SUB_H;
     personSpouses.forEach(s => {
       // SP_DIV_GAP replaces GAP between last row and spouse name
@@ -290,6 +292,15 @@ const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, sc
         'font-style': 'italic',
         class: isSpecialRoot ? 'font-spectral' : '',
       }).text(`(${person.alias})`);
+    }
+
+    if (hasDacVi) {
+      advance(prevH, SUB_H);
+      appendText({
+        fill: isSpecialRoot ? '#92400e' : '#b45309',
+        'font-size': isSpecialRoot ? '18px' : '10px',
+        'font-weight': 'bold',
+      }).text(person.dacVi);
     }
 
     if (mainLifespan) {

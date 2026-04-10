@@ -22,6 +22,7 @@ export const useFamilyData = (initialData = []) => {
         highlightDesc: m.highlight_desc,
         // Resilient mapping for alias, address and is_alive
         alias: m.alias || m.bi_danh || '',
+        dacVi: m.dac_vi || '',
         address: m.address || m.dia_chi || '',
         // Default to true if is_alive is null AND death is null/empty
         isAlive: m.is_alive !== null && m.is_alive !== undefined 
@@ -42,16 +43,17 @@ export const useFamilyData = (initialData = []) => {
 
   const [updatingIds, setUpdatingIds] = useState(new Set());
 
-  const handleUpdate = useCallback(async (id, name, born, death, address, alias, isAlive) => {
+  const handleUpdate = useCallback(async (id, name, born, death, address, alias, isAlive, dacVi) => {
     try {
       setUpdatingIds(prev => new Set(prev).add(id));
-      
-      const updateData = { 
-        name, 
-        born: born || null, 
-        death: death || null, 
+
+      const updateData = {
+        name,
+        born: born || null,
+        death: death || null,
         is_alive: isAlive,
         bi_danh: alias || null,
+        dac_vi: dacVi || null,
         dia_chi: address || null
       };
 
@@ -118,6 +120,7 @@ export const useFamilyData = (initialData = []) => {
         death: data.death || null,
         is_alive: data.isAlive !== undefined ? data.isAlive : true,
         bi_danh: data.alias || null,
+        dac_vi: data.dacVi || null,
         dia_chi: data.address || null
       };
 

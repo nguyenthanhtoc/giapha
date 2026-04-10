@@ -4,7 +4,11 @@
       "Skill(code-review-skill)",
       "Skill(code-review-skill:*)",
       "Bash(ls /Users/vinh/Documents/project2026/giapha/web/.env*)",
-      "Bash(ls /Users/vinh/Documents/project2026/giapha/.env*)"
+      "Bash(ls /Users/vinh/Documents/project2026/giapha/.env*)",
+      "Bash(node scripts/migrate.mjs)",
+      "Bash(npm install:*)",
+      "Bash(ls -la /Users/vinh/Documents/project2026/giapha/web/.env*)",
+      "Bash(ls -la /Users/vinh/Documents/project2026/giapha/.env*)"
     ]
   }
 }

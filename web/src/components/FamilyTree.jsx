@@ -22,13 +22,51 @@ export default function FamilyTree() {
   const [showFromGen15, setShowFromGen15] = useState(true);
   const [isMinimalMode, setIsMinimalMode] = useState(false);
   
-  const { 
-    mergedData, 
-    handleUpdate, 
-    handleDelete, 
+  const {
+    mergedData,
+    handleUpdate,
+    handleDelete,
     handleAddMember,
     updatingIds
   } = useFamilyData();
+
+  // Keyboard navigation: arrow keys to move between nodes
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!selectedPerson) return;
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.key) === -1) return;
+      // Don't interfere when typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      e.preventDefault();
+
+      // Only navigate among non-spouse nodes (spouseId === undefined/null)
+      const mainNodes = mergedData.filter(m => !m.spouseId);
+      const current = mainNodes.find(m => m.id === selectedPerson.id);
+      if (!current) return;
+
+      if (e.key === 'ArrowUp') {
+        // Select parent
+        const parent = mainNodes.find(m => m.id === current.parentId);
+        if (parent) setSelectedPerson(parent);
+      } else if (e.key === 'ArrowDown') {
+        // Select first child
+        const firstChild = mainNodes.find(m => m.parentId === current.id);
+        if (firstChild) setSelectedPerson(firstChild);
+      } else {
+        // Siblings: same parentId, sorted by their order in data
+        const siblings = mainNodes.filter(m => m.parentId === current.parentId && m.parentId != null);
+        const idx = siblings.findIndex(m => m.id === current.id);
+        if (idx === -1) return;
+        if (e.key === 'ArrowLeft' && idx > 0) {
+          setSelectedPerson(siblings[idx - 1]);
+        } else if (e.key === 'ArrowRight' && idx < siblings.length - 1) {
+          setSelectedPerson(siblings[idx + 1]);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPerson, mergedData]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -74,8 +112,8 @@ export default function FamilyTree() {
     }
   }, [mergedData, updatingIds, isAdmin, selectedPerson, focusId, collapsedIds, showFromGen15]);
 
-  const handleAdminUpdate = async (id, name, born, death, address, alias, isAlive) => {
-    await handleUpdate(id, name, born, death, address, alias, isAlive);
+  const handleAdminUpdate = async (id, name, born, death, address, alias, isAlive, dacVi) => {
+    await handleUpdate(id, name, born, death, address, alias, isAlive, dacVi);
   };
 
   const handleAdminDelete = async (person) => {

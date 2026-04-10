@@ -72,7 +72,7 @@ function PersonFields({ label, data, onChange, autoFocus, required }) {
           onClick={() => onChange('isAlive', !data.isAlive)}
           className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${data.isAlive ? 'bg-emerald-500' : 'bg-gray-300'}`}
         >
-          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${data.isAlive ? 'translate-x-5' : 'translate-x-0.5'}`} />
+          <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${data.isAlive ? 'translate-x-5' : 'translate-x-0'}`} />
         </button>
         <span className="text-xs text-amber-900/60 font-semibold">
           {data.isAlive ? 'Còn sống' : 'Đã mất'}
@@ -102,6 +102,13 @@ export default function QuickAddForm({ show, targetPerson, type, onClose, onSave
   const [sharedAddress, setSharedAddress] = useState('');
   const [showSpouseFields, setShowSpouseFields] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!show) return;
+    const handleKeyDown = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [show, onClose]);
 
   useEffect(() => {
     if (show) {

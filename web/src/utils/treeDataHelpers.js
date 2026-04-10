@@ -74,6 +74,7 @@ export const prepareTreeData = (data, collapsedIds, focusId, showFromGen15) => {
     const person = d.data;
     const personSpouses = spousesMap[person.id] || [];
     const hasAlias = !!(person.alias && person.alias.trim());
+    const hasDacVi = !!(person.dacVi && person.dacVi.trim());
     const hasAddress = !!(person.address && person.address.trim());
     // Constants must match treeNodeRenderer.js exactly
     const nameRowHeight = 16, subRowHeight = 12, spacing = 3;
@@ -81,6 +82,7 @@ export const prepareTreeData = (data, collapsedIds, focusId, showFromGen15) => {
 
     let totalHeight = nameRowHeight;
     if (hasAlias) totalHeight += spacing + subRowHeight;
+    if (hasDacVi) totalHeight += spacing + subRowHeight;
     if (hasLifespan(person)) totalHeight += spacing + subRowHeight;
     personSpouses.forEach(s => {
       totalHeight += spouseDivGap + spouseNameRowHeight;
