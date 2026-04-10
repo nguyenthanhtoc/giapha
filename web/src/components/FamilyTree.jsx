@@ -187,7 +187,7 @@ export default function FamilyTree() {
     <div
       ref={containerRef}
       className="relative w-full h-full bg-cover bg-center"
-      style={{ backgroundImage: "url('./bg_parchment.png')" }}
+      style={{ backgroundImage: "url('/giapha/bg_parchment.png')" }}
       onClick={() => setSelectedPerson(null)}
     >
       {/* Minimal Mode Toggle — restore UI button (only visible in minimal mode, same position/size as hide button) */}

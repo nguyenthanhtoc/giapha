@@ -45,7 +45,7 @@ export default function PasswordGate({ children }) {
       <div
         className={`relative bg-[#fffbeb] border-2 border-amber-800 rounded-lg shadow-2xl px-8 py-8 w-[90%] max-w-sm flex flex-col items-center gap-5 ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
         style={{
-          backgroundImage: "url('./bg_parchment.png')",
+          backgroundImage: "url('/giapha/bg_parchment.png')",
           backgroundSize: 'cover',
         }}
       >
