@@ -67,6 +67,7 @@ export const renderNode = ({
   const isRelated = selectedId && relatedIds.has(person.id);
   const isFaded = selectedId && !isSelected && !isRelated;
   const nodeIsAlive = person.isAlive || personSpouses.some(s => s.isAlive);
+  const personIsDead = person.isAlive === false || (person.isAlive == null && !!parseYear(person.death));
 
   const nodeGroup = gNode.append('g')
     .attr('class', `person-node ${isUpdating ? 'animate-pulse' : ''}`)
@@ -119,10 +120,11 @@ export const renderNode = ({
     return '#fffbeb';
   })();
 
-  // Border: blue for male, pink for female (gender-based, not alive-based)
+  // Border: blue for male, pink for female (gender-based); dimmed 50% opacity when dead
   const strokeColor = (() => {
     if (isSpecialRoot) return nodeIsAlive ? '#0369a1' : '#92400e';
     if (isSelected) return '#dc2626';
+    if (personIsDead) return person.gender === 'male' ? '#93b4f5' : '#f0a8cf';
     return person.gender === 'male' ? '#2563eb' : '#db2777';
   })();
 
@@ -138,9 +140,11 @@ export const renderNode = ({
     .attr('stroke-width', strokeWidth)
     .attr('filter', isSelected ? `url(#${selectedFilterId})` : (isUpdating ? null : `url(#${filterId})`));
 
-  // Top accent bar — blue for male, pink for female (gender-based)
+  // Top accent bar — blue for male, pink for female (gender-based); dimmed 50% opacity when dead
   if (!isSpecialRoot) {
-    const accentColor = person.gender === 'male' ? '#2563eb' : '#db2777';
+    const accentColor = personIsDead
+      ? (person.gender === 'male' ? '#93b4f5' : '#f0a8cf')
+      : (person.gender === 'male' ? '#2563eb' : '#db2777');
     const accentH = 6;
     const accentClipId = `accent-clip-${person.id}`;
     // Define a clipPath matching the card shape so the accent stays within rounded corners
