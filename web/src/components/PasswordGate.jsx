@@ -26,8 +26,13 @@ export default function PasswordGate({ children }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!CORRECT_PASSWORD || input === CORRECT_PASSWORD) {
-      sessionStorage.setItem(STORAGE_KEY, 'true');
-      setUnlocked(true);
+      // Blur input first to dismiss iOS keyboard, then wait for viewport to reset
+      inputRef.current?.blur();
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        sessionStorage.setItem(STORAGE_KEY, 'true');
+        setUnlocked(true);
+      }, 100);
     } else {
       setError(true);
       setShake(true);
