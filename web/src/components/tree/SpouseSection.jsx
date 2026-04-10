@@ -108,19 +108,6 @@ export default function SpouseSection({
               isAdmin={isAdmin}
             />
           </div>
-          <div className="w-full mb-1">
-            <InfoField 
-              label="Nơi ở" 
-              value={s.address} 
-              onEdit={(val) => {
-                const newStates = [...editSpouseStates];
-                newStates[index] = { ...newStates[index], address: val };
-                setEditSpouseStates(newStates);
-              }}
-              placeholder="Địa chỉ hiện tại"
-              isAdmin={isAdmin}
-            />
-          </div>
         </div>
       ))}
     </div>

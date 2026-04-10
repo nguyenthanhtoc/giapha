@@ -61,10 +61,10 @@ export default function InfoPanel({
       // Update main person
       await onUpdate(selectedPerson.id, capitalizedName, editBorn, editDeath, editAddress, editAlias, editIsAlive);
       
-      // Update all spouses
+      // Update all spouses — share the same address as the main person
       for (const s of editSpouseStates) {
         const capsName = capitalizeName(s.name);
-        await onUpdate(s.id, capsName, s.born, s.death, s.address, s.alias, s.isAlive);
+        await onUpdate(s.id, capsName, s.born, s.death, editAddress, s.alias, s.isAlive);
       }
       
       setSelectedPerson(null);
@@ -166,7 +166,7 @@ export default function InfoPanel({
               <InfoField label="Mất Năm" value={editDeath} onEdit={setEditDeath} placeholder="Năm mất" isAdmin={isAdmin} />
             </div>
             <div className="w-full mb-3">
-              <InfoField label="Nơi ở" value={editAddress} onEdit={setEditAddress} placeholder="Địa chỉ hiện tại" isAdmin={isAdmin} />
+              <InfoField label="Nơi ở (cả gia đình)" value={editAddress} onEdit={setEditAddress} placeholder="Địa chỉ hiện tại" isAdmin={isAdmin} />
             </div>
 
             {/* Spouses Section */}

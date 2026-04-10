@@ -16,8 +16,10 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
     const endY = yTarget - targetOffset;
 
     if (showFromGen15 && d.source.depth < 5) {
+      // Source node was filtered out (not shifted), so use target's x and
+      // a fixed entry point just above the target node instead.
       const trunkY = endY - 40;
-      return `M${xSource},${trunkY} H${xTarget} V${endY}`;
+      return `M${xTarget},${trunkY} V${endY}`;
     }
 
     const midY = (startY + endY) / 2;

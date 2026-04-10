@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { parseYear } from '@/utils/stringUtils';
 
 export const prepareTreeData = (data, collapsedIds, focusId, showFromGen15) => {
   const spousesMap = {};
@@ -65,18 +66,30 @@ export const prepareTreeData = (data, collapsedIds, focusId, showFromGen15) => {
   let descendants = root.descendants().filter(d => d.id !== virtualRootId);
   let links = root.links().filter(l => l.source.id !== virtualRootId);
 
+  const hasLifespan = (p) => !!(parseYear(p.born) || parseYear(p.death));
+
   // Add generation info and pre-calculate heights
   descendants.forEach(d => {
     // Height calculation
     const person = d.data;
     const personSpouses = spousesMap[person.id] || [];
-    const hasAlias = person.alias && person.alias.trim() !== '';
-    const totalSpouses = personSpouses.length;
-    const rowHeight = 14, spacing = 4;
-    const totalRows = 1 + (hasAlias ? 1 : 0) + totalSpouses;
-    const textContentHeight = totalRows * rowHeight + (totalRows - 1) * spacing;
-    const verticalPadding = 25;
-    d.dynamicNodeHeight = Math.max(65, textContentHeight + verticalPadding);
+    const hasAlias = !!(person.alias && person.alias.trim());
+    const hasAddress = !!(person.address && person.address.trim());
+    const nameRowHeight = 16, subRowHeight = 12, spacing = 3;
+    const spouseNameRowHeight = 14, spouseSubRowHeight = 11, spouseDivGap = 6;
+
+    let totalHeight = nameRowHeight;
+    if (hasAlias) totalHeight += spacing + subRowHeight;
+    if (hasLifespan(person)) totalHeight += spacing + subRowHeight;
+    if (hasAddress) totalHeight += spacing + subRowHeight;
+    personSpouses.forEach(s => {
+      totalHeight += spouseDivGap + spouseNameRowHeight;
+      if (hasLifespan(s)) totalHeight += spacing + spouseSubRowHeight;
+      if (s.address && s.address.trim()) totalHeight += spacing + spouseSubRowHeight;
+    });
+
+    const verticalPadding = 28;
+    d.dynamicNodeHeight = Math.max(70, totalHeight + verticalPadding);
 
     // Generation info
     if (d.depth > 0) {

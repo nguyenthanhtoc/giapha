@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { parseYear } from '@/utils/stringUtils';
 
 export const measureText = (text, size, weight) => {
   const canvas = document.createElement('canvas');
@@ -9,6 +10,19 @@ export const measureText = (text, size, weight) => {
   } catch (e) {
     return text.length * (weight === 'bold' ? 8.5 : 7);
   }
+};
+
+const formatLifespan = (person) => {
+  const born = parseYear(person.born);
+  const death = parseYear(person.death);
+  if (!born && !death) return null;
+  // isAlive: true = còn sống, undefined/null (data cũ không có trường này) = dùng năm mất để suy luận
+  const alive = person.isAlive === true || (person.isAlive == null && !death);
+  if (alive) return born ? `${born} - nay` : null;
+  if (born && death) return `${born} - ${death}`;
+  if (born) return `${born} - ?`;
+  if (death) return `? - ${death}`;
+  return null;
 };
 
 export const renderNode = ({
@@ -41,9 +55,12 @@ export const renderNode = ({
     const label = s.gender === 'female' ? 'Vợ: ' : 'Chồng: ';
     return measureText(`${label}${s.name}`, 14, 'bold');
   });
-  const maxTextWidth = Math.max(nameWidth, ...spouseWidths, 0);
-  const defaultNodeWidth = 160;
-  const nodeWidth = Math.max(defaultNodeWidth, maxTextWidth + 8);
+  const lifespanWidth = measureText(formatLifespan(person) || '', 11, 'normal');
+  const addressWidth = (person.address && person.address.trim())
+    ? measureText(`📍 ${person.address}`, 11, 'normal') : 0;
+  const maxTextWidth = Math.max(nameWidth, ...spouseWidths, lifespanWidth, addressWidth, 0);
+  const defaultNodeWidth = 180;
+  const nodeWidth = Math.max(defaultNodeWidth, maxTextWidth + 20);
 
   const isUpdating = updatingIds.has(person.id) || personSpouses.some(s => updatingIds.has(s.id));
   const isSelected = person.id === selectedId;
@@ -91,33 +108,59 @@ export const renderNode = ({
   const scaleFactor = isSpecialRoot ? 1.75 : 1.0;
   const finalNodeWidth = nodeWidth * scaleFactor;
   const finalNodeHeight = dynamicNodeHeight * scaleFactor;
+  const rx = 10 * scaleFactor;
 
+  const fillColor = (() => {
+    if (isSpecialRoot) return 'url(#pattern-root)';
+    if (isSelected) return nodeIsAlive ? '#eff6ff' : (person.gender === 'male' ? '#fff7ed' : '#fff1f2');
+    if (nodeIsAlive) return person.gender === 'male' ? '#eff6ff' : '#fdf4ff';
+    if (isRelated) return person.gender === 'male' ? '#fefce8' : '#fff1f2';
+    return person.gender === 'male' ? '#fffbeb' : '#fdf2f8';
+  })();
+
+  const strokeColor = (() => {
+    if (isSpecialRoot) return nodeIsAlive ? '#0369a1' : '#92400e';
+    if (isSelected) return '#dc2626';
+    if (nodeIsAlive) return person.gender === 'male' ? '#2563eb' : '#a21caf';
+    if (isRelated) return '#b45309';
+    return person.gender === 'male' ? '#b45309' : '#be185d';
+  })();
+
+  const strokeWidth = isSpecialRoot ? 4 : (isSelected ? 3 : (isRelated ? 2 : 1.5));
+
+  // Main card background
   nodeGroup.append('rect')
     .attr('x', -finalNodeWidth / 2).attr('y', -finalNodeHeight / 2)
     .attr('width', finalNodeWidth).attr('height', finalNodeHeight)
-    .attr('rx', 8 * scaleFactor)
-    .attr('fill', () => {
-        if (isSpecialRoot) return 'url(#pattern-root)';
-        if (isSelected) return nodeIsAlive ? '#f0f9ff' : (person.gender === 'male' ? '#fff7ed' : '#fff1f2');
-        if (nodeIsAlive) return person.gender === 'male' ? '#f0f9ff' : '#fdf4ff';
-        if (isRelated) return person.gender === 'male' ? '#fefce8' : '#fff1f2';
-        return person.gender === 'male' ? '#fffbeb' : '#fdf2f8';
-    })
-    .attr('stroke', () => {
-        if (isSpecialRoot) return nodeIsAlive ? '#0369a1' : '#92400e';
-        if (isSelected) return '#dc2626'; 
-        if (nodeIsAlive) return person.gender === 'male' ? '#0369a1' : '#c026d3';
-        if (isRelated) return '#b45309'; 
-        return person.gender === 'male' ? '#b45309' : '#be185d';
-    })
-    .attr('stroke-width', isSpecialRoot ? 4 : (isSelected ? 3.5 : (isRelated ? 2.5 : 1.5)))
+    .attr('rx', rx)
+    .attr('fill', fillColor)
+    .attr('stroke', strokeColor)
+    .attr('stroke-width', strokeWidth)
     .attr('filter', isSelected ? `url(#${selectedFilterId})` : (isUpdating ? null : `url(#${filterId})`));
+
+  // Top accent bar (gender color strip)
+  if (!isSpecialRoot) {
+    const accentColor = nodeIsAlive
+      ? (person.gender === 'male' ? '#2563eb' : '#a21caf')
+      : (person.gender === 'male' ? '#b45309' : '#be185d');
+    const accentH = 4;
+    // Clip the accent to the top-rounded corners using a small rect offset
+    nodeGroup.append('rect')
+      .attr('x', -finalNodeWidth / 2 + strokeWidth / 2)
+      .attr('y', -finalNodeHeight / 2 + strokeWidth / 2)
+      .attr('width', finalNodeWidth - strokeWidth)
+      .attr('height', accentH)
+      .attr('rx', rx - strokeWidth / 2)
+      .attr('ry', rx - strokeWidth / 2)
+      .attr('fill', accentColor)
+      .attr('opacity', isSelected ? 1 : 0.75);
+  }
 
   // Action Buttons
   renderActionButtons({ nodeGroup, isSelected, isUpdating, isAdmin, finalNodeWidth, finalNodeHeight, person, data, virtualRootId, focusId, collapsedIds, onShowDetails, onSelectPerson, onFocus, onToggleCollapse, onQuickAddChild, onQuickAddSpouse, onQuickDelete });
 
   // Text Content
-  renderTextContent({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor, dynamicNodeHeight });
+  renderTextContent({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor, dynamicNodeHeight, finalNodeWidth });
 
   if (isUpdating) {
     nodeGroup.append('circle')
@@ -171,30 +214,119 @@ const renderActionButtons = ({ nodeGroup, isSelected, isUpdating, isAdmin, final
     }
 };
 
-const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor, dynamicNodeHeight }) => {
-    const hasAlias = person.alias && person.alias.trim() !== '';
+const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor, dynamicNodeHeight, finalNodeWidth }) => {
+    const hasAlias = !!(person.alias && person.alias.trim());
+    const hasAddress = !!(person.address && person.address.trim());
     const totalSpouses = personSpouses.length;
-    const rowHeight = 14, spacing = 4;
-    const totalRows = 1 + (hasAlias ? 1 : 0) + totalSpouses;
-    const textContentHeight = totalRows * rowHeight + (totalRows - 1) * spacing;
-    let currentDy = ((rowHeight / 2) - (textContentHeight / 2)) * scaleFactor;
-    
-    nodeGroup.append('text')
-      .attr('dy', currentDy).attr('text-anchor', 'middle').attr('fill', isSpecialRoot ? '#78350f' : '#1c1917')
-      .attr('font-size', isSpecialRoot ? '28px' : '14px').attr('font-weight', 'bold').attr('class', isSpecialRoot ? 'font-spectral' : '')
-      .text(person.name);
+
+    const NAME_H = 16, SUB_H = 12, GAP = 3;
+    const SP_NAME_H = 14, SP_SUB_H = 11, SP_DIV_GAP = 6;
+
+    // Pre-compute main lifespan
+    const mainLifespan = formatLifespan(person);
+
+    // Calculate total text height for vertical centering
+    let totalH = NAME_H;
+    if (hasAlias) totalH += GAP + SUB_H;
+    if (mainLifespan) totalH += GAP + SUB_H;
+    if (hasAddress) totalH += GAP + SUB_H;
+    personSpouses.forEach(s => {
+      totalH += SP_DIV_GAP + SP_NAME_H;
+      if (formatLifespan(s)) totalH += GAP + SP_SUB_H;
+      if (s.address && s.address.trim()) totalH += GAP + SP_SUB_H;
+    });
+
+    // currentY tracks the center of the current row (unscaled)
+    let currentY = -totalH / 2 + NAME_H / 2;
+    let prevH = NAME_H; // height of the last rendered row
+
+    const advance = (prevRowH, nextRowH, extra = 0) => {
+      currentY += prevRowH / 2 + GAP + extra + nextRowH / 2;
+      prevH = nextRowH;
+    };
+
+    const appendText = (attrs) => {
+      const t = nodeGroup.append('text').attr('dy', currentY * scaleFactor).attr('text-anchor', 'middle');
+      Object.entries(attrs).forEach(([k, v]) => t.attr(k, v));
+      return t;
+    };
+
+    // Main person name
+    appendText({
+      fill: isSpecialRoot ? '#78350f' : '#1c1917',
+      'font-size': isSpecialRoot ? '28px' : '14px',
+      'font-weight': 'bold',
+      class: isSpecialRoot ? 'font-spectral' : '',
+    }).text(person.name);
 
     if (hasAlias) {
-      currentDy += (rowHeight + spacing) * scaleFactor;
-      nodeGroup.append('text').attr('dy', currentDy).attr('text-anchor', 'middle').attr('fill', isSpecialRoot ? '#92400e' : '#44403c').attr('font-size', isSpecialRoot ? '22px' : '11px').attr('font-weight', 'medium').attr('font-style', 'italic').attr('class', isSpecialRoot ? 'font-spectral' : '').text(`(${person.alias})`);
+      advance(NAME_H, SUB_H);
+      appendText({
+        fill: isSpecialRoot ? '#92400e' : '#6b7280',
+        'font-size': isSpecialRoot ? '20px' : '11px',
+        'font-style': 'italic',
+        class: isSpecialRoot ? 'font-spectral' : '',
+      }).text(`(${person.alias})`);
     }
 
-    if (totalSpouses > 0) {
-      personSpouses.forEach((s) => {
-        currentDy += (rowHeight + spacing) * scaleFactor;
-        const label = s.gender === 'female' ? 'Vợ: ' : 'Chồng: ';
-        const spouseColor = s.gender === 'female' ? '#be185d' : '#1e40af'; 
-        nodeGroup.append('text').attr('dy', currentDy).attr('text-anchor', 'middle').attr('fill', isSpecialRoot ? '#92400e' : spouseColor).attr('font-size', isSpecialRoot ? '28px' : '14px').attr('font-weight', 'bold').attr('class', isSpecialRoot ? 'font-spectral' : '').text(`${label}${s.name}`);
-      });
+    if (mainLifespan) {
+      advance(prevH, SUB_H);
+      const lifespanColor = person.isAlive ? '#16a34a' : '#78350f';
+      appendText({
+        fill: isSpecialRoot ? '#92400e' : lifespanColor,
+        'font-size': isSpecialRoot ? '18px' : '11px',
+      }).text(mainLifespan);
     }
+
+    if (hasAddress) {
+      advance(prevH, SUB_H);
+      appendText({
+        fill: isSpecialRoot ? '#92400e' : '#6b7280',
+        'font-size': isSpecialRoot ? '18px' : '11px',
+      }).text(`📍 ${person.address}`);
+    }
+
+    // Spouses
+    personSpouses.forEach((s) => {
+      const spouseLifespan = formatLifespan(s);
+      const spouseHasAddress = !!(s.address && s.address.trim());
+      const spouseColor = s.gender === 'female' ? '#be185d' : '#1e40af';
+
+      // Divider line — advance with extra gap
+      const dividerY = (currentY + prevH / 2 + SP_DIV_GAP / 2) * scaleFactor;
+      nodeGroup.append('line')
+        .attr('x1', -finalNodeWidth * 0.4).attr('x2', finalNodeWidth * 0.4)
+        .attr('y1', dividerY).attr('y2', dividerY)
+        .attr('stroke', isSpecialRoot ? '#92400e' : spouseColor)
+        .attr('stroke-width', 0.6)
+        .attr('opacity', 0.35);
+
+      currentY += prevH / 2 + SP_DIV_GAP + SP_NAME_H / 2;
+      prevH = SP_NAME_H;
+
+      const label = s.gender === 'female' ? '♀ ' : '♂ ';
+      appendText({
+        fill: isSpecialRoot ? '#92400e' : spouseColor,
+        'font-size': isSpecialRoot ? '24px' : '13px',
+        'font-weight': 'bold',
+        class: isSpecialRoot ? 'font-spectral' : '',
+      }).text(`${label}${s.name}`);
+
+      if (spouseLifespan) {
+        advance(prevH, SP_SUB_H);
+        const spouseLifespanColor = s.isAlive ? '#16a34a' : (s.gender === 'female' ? '#9d174d' : '#1e3a8a');
+        appendText({
+          fill: isSpecialRoot ? '#92400e' : spouseLifespanColor,
+          'font-size': isSpecialRoot ? '16px' : '10px',
+        }).text(spouseLifespan);
+      }
+
+      if (spouseHasAddress) {
+        advance(prevH, SP_SUB_H);
+        appendText({
+          fill: isSpecialRoot ? '#92400e' : '#9ca3af',
+          'font-size': isSpecialRoot ? '16px' : '10px',
+        }).text(`📍 ${s.address}`);
+      }
+    });
 };

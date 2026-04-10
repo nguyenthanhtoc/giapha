@@ -85,28 +85,43 @@ export default function FamilyTree() {
     }
   };
 
-  const handleQuickSave = async ({ targetId, type, name, spouseName }) => {
+  const handleQuickSave = async ({ targetId, type, person, spousePerson }) => {
     if (type === 'spouse') {
       const target = mergedData.find(m => m.id === targetId);
       await handleAddMember({
-        name,
+        name: person.name,
         gender: target?.gender === 'male' ? 'female' : 'male',
         spouseId: targetId,
-        role: target?.gender === 'male' ? 'Phu nhân' : 'Phu quân'
+        role: target?.gender === 'male' ? 'Phu nhân' : 'Phu quân',
+        born: person.born || null,
+        death: person.isAlive ? null : (person.death || null),
+        alias: person.alias || null,
+        address: person.address || null,
+        isAlive: person.isAlive,
       });
     } else {
       const res = await handleAddMember({
-        name,
+        name: person.name,
         gender: 'male',
         parentId: targetId,
-        role: 'Thế Hệ Tiếp'
+        role: 'Thế Hệ Tiếp',
+        born: person.born || null,
+        death: person.isAlive ? null : (person.death || null),
+        alias: person.alias || null,
+        address: person.address || null,
+        isAlive: person.isAlive,
       });
-      if (res.success && spouseName && res.data?.id) {
+      if (res.success && spousePerson?.name && res.data?.id) {
         await handleAddMember({
-          name: spouseName,
+          name: spousePerson.name,
           gender: 'female',
           spouseId: res.data.id,
-          role: 'Phu nhân'
+          role: 'Phu nhân',
+          born: spousePerson.born || null,
+          death: spousePerson.isAlive ? null : (spousePerson.death || null),
+          alias: spousePerson.alias || null,
+          address: spousePerson.address || null,
+          isAlive: spousePerson.isAlive,
         });
       }
     }
@@ -159,29 +174,12 @@ export default function FamilyTree() {
         onSave={handleQuickSave}
       />
 
-      {/* Generation Filter Toggle */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-8 z-30">
-        <button
-          onClick={() => setShowFromGen15(!showFromGen15)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all duration-300 shadow-lg ${
-            showFromGen15 
-              ? 'bg-amber-900 border-amber-900 text-[#fffbeb]' 
-              : 'bg-[#fffbeb]/90 border-amber-900/30 text-amber-900 hover:border-amber-900/60'
-          }`}
-        >
-          <div className={`w-3 h-3 rounded-full ${showFromGen15 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-900/20'}`} />
-          <span className="text-xs sm:text-sm font-black font-spectral uppercase tracking-wider">
-            {showFromGen15 ? 'Hiển thị: Đệ 15 trở đi' : 'Tất cả các đời'}
-          </span>
-        </button>
-      </div>
-
-      {/* Zoom Indicator */}
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-8 z-30 pointer-events-none select-none">
+      {/* Zoom Indicator — top-left on sm+, bottom-left on mobile */}
+      <div className="absolute bottom-4 left-4 sm:bottom-auto sm:top-6 sm:left-8 z-30 pointer-events-none select-none">
         <div className="bg-[#fffbeb]/90 backdrop-blur-sm border border-amber-900/30 px-3 py-1.5 rounded shadow-lg flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-tighter">Thu Phóng</span>
-            <span className="text-sm sm:text-base font-black text-amber-900 font-spectral">
+            <span className="text-sm font-black text-amber-900 font-spectral">
               {Math.round(zoomLevel * 100)}%
             </span>
           </div>
@@ -191,6 +189,23 @@ export default function FamilyTree() {
             <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Live</span>
           </div>
         </div>
+      </div>
+
+      {/* Generation Filter Toggle — top-right on sm+, bottom-right on mobile */}
+      <div className="absolute bottom-4 right-4 sm:bottom-auto sm:top-6 sm:right-8 z-30">
+        <button
+          onClick={() => setShowFromGen15(!showFromGen15)}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all duration-300 shadow-lg ${
+            showFromGen15
+              ? 'bg-amber-900 border-amber-900 text-[#fffbeb]'
+              : 'bg-[#fffbeb]/90 border-amber-900/30 text-amber-900 hover:border-amber-900/60'
+          }`}
+        >
+          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${showFromGen15 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-900/20'}`} />
+          <span className="text-xs font-black font-spectral uppercase tracking-wider whitespace-nowrap">
+            {showFromGen15 ? 'Từ Đệ 15' : 'Từ Đệ 11'}
+          </span>
+        </button>
       </div>
     </div>
   );
