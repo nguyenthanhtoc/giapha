@@ -34,6 +34,12 @@ export default function FamilyTree() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!selectedPerson) return;
+      // Enter opens the detail popup
+      if (e.key === 'Enter') {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (!showDetails && !isMinimalMode) { e.preventDefault(); setShowDetails(true); }
+        return;
+      }
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.key) === -1) return;
       // Don't interfere when typing in an input
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -77,7 +83,7 @@ export default function FamilyTree() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedPerson, mergedData]);
+  }, [selectedPerson, mergedData, showDetails, isMinimalMode]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
