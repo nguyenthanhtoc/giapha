@@ -45,9 +45,20 @@ export default function FamilyTree() {
       if (!current) return;
 
       if (e.key === 'ArrowUp') {
-        // Select parent
+        // Select parent — block if showFromGen15 and parent would be hidden
         const parent = mainNodes.find(m => m.id === current.parentId);
-        if (parent) setSelectedPerson(parent);
+        if (parent) {
+          if (showFromGen15) {
+            // Compute depth of parent by walking up the tree
+            const getDepth = (node) => {
+              let d = 0, n = node;
+              while (n.parentId) { n = mainNodes.find(m => m.id === n.parentId); if (!n) break; d++; }
+              return d;
+            };
+            if (getDepth(parent) < 5) return;
+          }
+          setSelectedPerson(parent);
+        }
       } else if (e.key === 'ArrowDown') {
         // Select first child
         const firstChild = mainNodes.find(m => m.parentId === current.id);
@@ -173,11 +184,11 @@ export default function FamilyTree() {
       style={{ backgroundImage: "url('./bg_parchment.png')" }}
       onClick={() => setSelectedPerson(null)}
     >
-      {/* Minimal Mode Toggle — restore UI button (only visible in minimal mode) */}
+      {/* Minimal Mode Toggle — restore UI button (only visible in minimal mode, same position/size as hide button) */}
       {isMinimalMode && (
         <button
           onClick={(e) => { e.stopPropagation(); setIsMinimalMode(false); }}
-          className="absolute top-6 right-8 z-50 flex items-center justify-center w-9 h-9 rounded-full bg-amber-900/80 hover:bg-amber-900 text-[#fffbeb] shadow-xl border border-amber-700/50 transition-colors duration-200"
+          className="absolute bottom-4 right-4 sm:bottom-auto sm:top-6 sm:right-8 z-50 flex items-center justify-center w-8 h-8 rounded-full bg-amber-900/80 hover:bg-amber-900 text-[#fffbeb] shadow-xl border border-amber-700/50 transition-colors duration-200"
           title="Hiện UI"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -245,16 +256,6 @@ export default function FamilyTree() {
 
       {/* Generation Filter Toggle — top-right on sm+, bottom-right on mobile */}
       <div className={`absolute bottom-4 right-4 sm:bottom-auto sm:top-6 sm:right-8 z-30 flex items-center gap-2 transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        {/* Hide UI Toggle Button */}
-        <button
-          onClick={(e) => { e.stopPropagation(); setIsMinimalMode(true); }}
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-[#fffbeb]/90 hover:bg-[#fffbeb] border border-amber-900/30 hover:border-amber-900/60 text-amber-900/60 hover:text-amber-900 shadow-lg transition-all duration-200 hover:scale-110"
-          title="Ẩn UI"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-            <path fillRule="evenodd" d="M10 17a.75.75 0 0 1-.75-.75V5.612L5.29 9.77a.75.75 0 0 1-1.08-1.04l5.25-5.5a.75.75 0 0 1 1.08 0l5.25 5.5a.75.75 0 1 1-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0 1 10 17Z" clipRule="evenodd" />
-          </svg>
-        </button>
         <button
           onClick={(e) => { e.stopPropagation(); setShowFromGen15(!showFromGen15); }}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all duration-300 shadow-lg ${
@@ -267,6 +268,16 @@ export default function FamilyTree() {
           <span className="text-xs font-black font-spectral uppercase tracking-wider whitespace-nowrap">
             {showFromGen15 ? 'Từ Đệ 15' : 'Từ Đệ 11'}
           </span>
+        </button>
+        {/* Hide UI Toggle Button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setIsMinimalMode(true); }}
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-[#fffbeb]/90 hover:bg-[#fffbeb] border border-amber-900/30 hover:border-amber-900/60 text-amber-900/60 hover:text-amber-900 shadow-lg transition-all duration-200 hover:scale-110"
+          title="Ẩn UI"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+            <path fillRule="evenodd" d="M10 17a.75.75 0 0 1-.75-.75V5.612L5.29 9.77a.75.75 0 0 1-1.08-1.04l5.25-5.5a.75.75 0 0 1 1.08 0l5.25 5.5a.75.75 0 1 1-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0 1 10 17Z" clipRule="evenodd" />
+          </svg>
         </button>
       </div>
     </div>

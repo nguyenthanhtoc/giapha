@@ -28,35 +28,45 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
   const isRelatedLink = (d) =>
     selectedId && relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
 
-  // Trunk/rail is highlighted if the parent is related AND at least one child in the group is related
-  const isGroupRelated = (groupLinks) =>
+  // Trunk is highlighted if the parent is related AND at least one child in the group is related
+  const isTrunkRelated = (groupLinks) =>
     selectedId &&
     relatedIds.has(groupLinks[0].source.id) &&
     groupLinks.some(d => relatedIds.has(d.target.id));
+
+  // Rail (horizontal) is highlighted only if multiple children are related,
+  // to avoid highlighting the entire sibling rail when only one child is selected
+  const isRailRelated = (groupLinks) =>
+    selectedId &&
+    relatedIds.has(groupLinks[0].source.id) &&
+    groupLinks.filter(d => relatedIds.has(d.target.id)).length >= 2;
 
   const getStroke = (d) => {
     if (!selectedId) return '#a16207';
     return isRelatedLink(d) ? '#92400e' : '#d1d5db';
   };
-  const getGroupStroke = (groupLinks) => {
+  const getGroupStroke = (groupLinks, isRail) => {
     if (!selectedId) return '#a16207';
-    return isGroupRelated(groupLinks) ? '#92400e' : '#d1d5db';
+    const related = isRail ? isRailRelated(groupLinks) : isTrunkRelated(groupLinks);
+    return related ? '#92400e' : '#d1d5db';
   };
   const getOpacity = (d) => {
     if (!selectedId) return 0.5;
     return isRelatedLink(d) ? 0.9 : 0.2;
   };
-  const getGroupOpacity = (groupLinks) => {
+  const getGroupOpacity = (groupLinks, isRail) => {
     if (!selectedId) return 0.5;
-    return isGroupRelated(groupLinks) ? 0.9 : 0.2;
+    const related = isRail ? isRailRelated(groupLinks) : isTrunkRelated(groupLinks);
+    return related ? 0.9 : 0.2;
   };
   const getWidth = (d) => {
     if (!selectedId) return 1.5;
     return isRelatedLink(d) ? 3 : 1;
   };
-  const getGroupWidth = (groupLinks) => {
+  const getGroupWidth = (groupLinks, isRail) => {
     if (!selectedId) return 1.5;
-    return isGroupRelated(groupLinks) ? 3 : 1;
+    const related = isRail ? isRailRelated(groupLinks) : isTrunkRelated(groupLinks);
+    return related ? 3 : 1;
   };
 
   const pathSegments = [];
@@ -78,7 +88,7 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
 
       // Horizontal rail spanning all siblings (only if more than one)
       if (targets.length > 1) {
-        pathSegments.push({ d: `M${minX},${railY} H${maxX}`, link: groupLinks[0], groupLinks });
+        pathSegments.push({ d: `M${minX},${railY} H${maxX}`, link: groupLinks[0], groupLinks, isRail: true });
       }
 
       // Branch from rail down to each child top
@@ -97,11 +107,11 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
     const railY = startY + (minChildTopY - startY) * 0.55;
 
     // Draw trunk: parent bottom → rail (highlight based on group)
-    pathSegments.push({ d: `M${sourceX},${startY} V${railY}`, link: groupLinks[0], groupLinks });
+    pathSegments.push({ d: `M${sourceX},${startY} V${railY}`, link: groupLinks[0], groupLinks, isRail: false });
 
     // Draw horizontal rail spanning all children (only if more than one child)
     if (targets.length > 1) {
-      pathSegments.push({ d: `M${minX},${railY} H${maxX}`, link: groupLinks[0], groupLinks });
+      pathSegments.push({ d: `M${minX},${railY} H${maxX}`, link: groupLinks[0], groupLinks, isRail: true });
     }
 
     // Draw branch from rail down to each child top
@@ -117,9 +127,9 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
     .data(pathSegments)
     .join('path')
     .attr('d', seg => seg.d)
-    .attr('stroke', seg => seg.groupLinks ? getGroupStroke(seg.groupLinks) : getStroke(seg.link))
-    .attr('stroke-opacity', seg => seg.groupLinks ? getGroupOpacity(seg.groupLinks) : getOpacity(seg.link))
-    .attr('stroke-width', seg => seg.groupLinks ? getGroupWidth(seg.groupLinks) : getWidth(seg.link))
+    .attr('stroke', seg => seg.groupLinks ? getGroupStroke(seg.groupLinks, seg.isRail) : getStroke(seg.link))
+    .attr('stroke-opacity', seg => seg.groupLinks ? getGroupOpacity(seg.groupLinks, seg.isRail) : getOpacity(seg.link))
+    .attr('stroke-width', seg => seg.groupLinks ? getGroupWidth(seg.groupLinks, seg.isRail) : getWidth(seg.link))
     .attr('stroke-linejoin', 'round');
 
   return linkGroup;
