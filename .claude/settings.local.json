@@ -10,7 +10,8 @@
       "Bash(ls -la /Users/vinh/Documents/project2026/giapha/web/.env*)",
       "Bash(ls -la /Users/vinh/Documents/project2026/giapha/.env*)",
       "Bash(cat /Users/vinh/Documents/project2026/giapha/.github/workflows/*.yml)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(git push:*)"
     ]
   }
 }
