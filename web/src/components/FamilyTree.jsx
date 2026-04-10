@@ -129,8 +129,8 @@ export default function FamilyTree() {
     }
   }, [mergedData, updatingIds, isAdmin, selectedPerson, focusId, collapsedIds, showFromGen15]);
 
-  const handleAdminUpdate = async (id, name, born, death, address, alias, isAlive, dacVi) => {
-    await handleUpdate(id, name, born, death, address, alias, isAlive, dacVi);
+  const handleAdminUpdate = async (id, name, born, death, address, alias, isAlive, dacVi, gender) => {
+    await handleUpdate(id, name, born, death, address, alias, isAlive, dacVi, gender);
   };
 
   const handleAdminDelete = async (person) => {
@@ -146,7 +146,7 @@ export default function FamilyTree() {
       const target = mergedData.find(m => m.id === targetId);
       await handleAddMember({
         name: person.name,
-        gender: target?.gender === 'male' ? 'female' : 'male',
+        gender: person.gender || (target?.gender === 'male' ? 'female' : 'male'),
         spouseId: targetId,
         role: target?.gender === 'male' ? 'Phu nhân' : 'Phu quân',
         born: person.born || null,
@@ -158,7 +158,7 @@ export default function FamilyTree() {
     } else {
       const res = await handleAddMember({
         name: person.name,
-        gender: 'male',
+        gender: person.gender || 'male',
         parentId: targetId,
         role: 'Thế Hệ Tiếp',
         born: person.born || null,
@@ -170,7 +170,7 @@ export default function FamilyTree() {
       if (res.success && spousePerson?.name && res.data?.id) {
         await handleAddMember({
           name: spousePerson.name,
-          gender: 'female',
+          gender: spousePerson.gender || (person.gender === 'female' ? 'male' : 'female'),
           spouseId: res.data.id,
           role: 'Phu nhân',
           born: spousePerson.born || null,

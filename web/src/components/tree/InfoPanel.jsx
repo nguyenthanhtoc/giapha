@@ -21,7 +21,8 @@ export default function InfoPanel({
   const [editAlias, setEditAlias] = useState('');
   const [editDacVi, setEditDacVi] = useState('');
   const [editIsAlive, setEditIsAlive] = useState(true);
-  
+  const [editGender, setEditGender] = useState('male');
+
   const [editSpouseStates, setEditSpouseStates] = useState([]); // Array of spouse objects for editing
   
   const [isSaving, setIsSaving] = useState(false);
@@ -37,6 +38,7 @@ export default function InfoPanel({
       setEditAlias(selectedPerson.alias || '');
       setEditDacVi(selectedPerson.dacVi || '');
       setEditIsAlive(selectedPerson.isAlive !== false);
+      setEditGender(selectedPerson.gender || 'male');
     }
 
     const spouseList = spouses.map(s => ({
@@ -61,7 +63,7 @@ export default function InfoPanel({
     setIsSaving(true);
     try {
       // Update main person
-      await onUpdate(selectedPerson.id, capitalizedName, editBorn, editDeath, editAddress, editAlias, editIsAlive, editDacVi);
+      await onUpdate(selectedPerson.id, capitalizedName, editBorn, editDeath, editAddress, editAlias, editIsAlive, editDacVi, editGender);
 
       // Update all spouses — share the same address as the main person
       for (const s of editSpouseStates) {
@@ -75,7 +77,7 @@ export default function InfoPanel({
     } finally {
       setIsSaving(false);
     }
-  }, [editName, editBorn, editDeath, editAddress, editAlias, editIsAlive, editDacVi, editSpouseStates, selectedPerson, onUpdate, setSelectedPerson]);
+  }, [editName, editBorn, editDeath, editAddress, editAlias, editIsAlive, editDacVi, editGender, editSpouseStates, selectedPerson, onUpdate, setSelectedPerson]);
 
   useEffect(() => {
     if (!selectedPerson) return;
@@ -131,24 +133,45 @@ export default function InfoPanel({
               </h2>
             )}
 
-            {/* Status Toggle / Display */}
-            <div className="mb-4">
+            {/* Status + Gender Row */}
+            <div className="mb-4 flex items-center gap-2 flex-wrap justify-center">
               {isAdmin ? (
-                <div className="flex items-center gap-3 bg-white/40 px-4 py-2 rounded-xl border border-amber-800/10">
-                  <span className="text-[10px] uppercase font-black text-amber-900/60">Trạng thái:</span>
-                  <button 
-                    onClick={() => setEditIsAlive(!editIsAlive)}
-                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${editIsAlive ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-red-100 text-red-800 border border-red-200'}`}
-                  >
-                    <div className={`w-2 h-2 rounded-full ${editIsAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-                    {editIsAlive ? 'CÒN SỐNG' : 'ĐÃ MẤT'}
-                  </button>
-                </div>
+                <>
+                  <div className="flex items-center gap-2 bg-white/40 px-3 py-1.5 rounded-xl border border-amber-800/10">
+                    <span className="text-[10px] uppercase font-black text-amber-900/60">Trạng thái:</span>
+                    <button
+                      onClick={() => setEditIsAlive(!editIsAlive)}
+                      className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${editIsAlive ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-red-100 text-red-800 border border-red-200'}`}
+                    >
+                      <div className={`w-2 h-2 rounded-full ${editIsAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                      {editIsAlive ? 'CÒN SỐNG' : 'ĐÃ MẤT'}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-white/40 px-3 py-1.5 rounded-xl border border-amber-800/10">
+                    <button
+                      onClick={() => setEditGender('male')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${editGender === 'male' ? 'bg-blue-100 text-blue-800 border border-blue-300' : 'text-amber-900/40 hover:text-amber-900/60'}`}
+                    >
+                      ♂ Nam
+                    </button>
+                    <button
+                      onClick={() => setEditGender('female')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${editGender === 'female' ? 'bg-pink-100 text-pink-800 border border-pink-300' : 'text-amber-900/40 hover:text-amber-900/60'}`}
+                    >
+                      ♀ Nữ
+                    </button>
+                  </div>
+                </>
               ) : (
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold ${selectedPerson.isAlive ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
-                  <div className={`w-2 h-2 rounded-full ${selectedPerson.isAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-                  {selectedPerson.isAlive ? 'CÒN SỐNG' : 'ĐÃ MẤT'}
-                </div>
+                <>
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold ${selectedPerson.isAlive ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
+                    <div className={`w-2 h-2 rounded-full ${selectedPerson.isAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                    {selectedPerson.isAlive ? 'CÒN SỐNG' : 'ĐÃ MẤT'}
+                  </div>
+                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold ${selectedPerson.gender === 'male' ? 'bg-blue-50 text-blue-800' : 'bg-pink-50 text-pink-800'}`}>
+                    {selectedPerson.gender === 'male' ? '♂ Nam' : '♀ Nữ'}
+                  </div>
+                </>
               )}
             </div>
 

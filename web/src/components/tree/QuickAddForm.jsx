@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { capitalizeName } from '@/utils/stringUtils';
 
-const emptyPerson = () => ({
+const emptyPerson = (defaultGender = 'male') => ({
   name: '',
   born: '',
   death: '',
   alias: '',
   isAlive: true,
+  gender: defaultGender,
 });
 
 function PersonFields({ label, data, onChange, autoFocus, required }) {
@@ -19,6 +20,29 @@ function PersonFields({ label, data, onChange, autoFocus, required }) {
           {label}
         </div>
       )}
+
+      {/* Giới tính */}
+      <div>
+        <label className="block text-[10px] font-bold text-amber-900/40 uppercase tracking-widest mb-1">
+          Giới tính
+        </label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onChange('gender', 'male')}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border-2 text-xs font-bold transition-all ${data.gender === 'male' ? 'bg-blue-50 border-blue-400 text-blue-700' : 'bg-white border-amber-900/10 text-amber-900/40 hover:border-amber-900/20'}`}
+          >
+            <span className="text-sm">♂</span> Con trai
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange('gender', 'female')}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border-2 text-xs font-bold transition-all ${data.gender === 'female' ? 'bg-pink-50 border-pink-400 text-pink-700' : 'bg-white border-amber-900/10 text-amber-900/40 hover:border-amber-900/20'}`}
+          >
+            <span className="text-sm">♀</span> Con gái
+          </button>
+        </div>
+      </div>
 
       {/* Tên */}
       <div>
@@ -97,8 +121,8 @@ function PersonFields({ label, data, onChange, autoFocus, required }) {
 }
 
 export default function QuickAddForm({ show, targetPerson, type, onClose, onSave }) {
-  const [person, setPerson] = useState(emptyPerson());
-  const [spouse, setSpouse] = useState(emptyPerson());
+  const [person, setPerson] = useState(emptyPerson('male'));
+  const [spouse, setSpouse] = useState(emptyPerson('female'));
   const [sharedAddress, setSharedAddress] = useState('');
   const [showSpouseFields, setShowSpouseFields] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -112,8 +136,11 @@ export default function QuickAddForm({ show, targetPerson, type, onClose, onSave
 
   useEffect(() => {
     if (show) {
-      setPerson(emptyPerson());
-      setSpouse(emptyPerson());
+      const defaultPersonGender = type === 'spouse'
+        ? (targetPerson?.gender === 'male' ? 'female' : 'male')
+        : 'male';
+      setPerson(emptyPerson(defaultPersonGender));
+      setSpouse(emptyPerson(defaultPersonGender === 'male' ? 'female' : 'male'));
       setSharedAddress('');
       setShowSpouseFields(false);
     }
@@ -194,13 +221,15 @@ export default function QuickAddForm({ show, targetPerson, type, onClose, onSave
                   className="flex items-center gap-2 text-[10px] font-bold text-amber-900/50 uppercase tracking-widest hover:text-amber-900/80 transition-colors"
                 >
                   <span className={`text-base leading-none transition-transform ${showSpouseFields ? 'rotate-45' : ''}`}>+</span>
-                  {showSpouseFields ? 'Ẩn thông tin vợ' : 'Thêm thông tin vợ'}
+                  {showSpouseFields
+                    ? (person.gender === 'female' ? 'Ẩn thông tin chồng' : 'Ẩn thông tin vợ')
+                    : (person.gender === 'female' ? 'Thêm thông tin chồng' : 'Thêm thông tin vợ')}
                 </button>
 
                 {showSpouseFields && (
                   <div className="mt-4">
                     <PersonFields
-                      label="Thông tin vợ (không bắt buộc)"
+                      label={person.gender === 'female' ? 'Thông tin chồng (không bắt buộc)' : 'Thông tin vợ (không bắt buộc)'}
                       data={spouse}
                       onChange={updateSpouse}
                     />

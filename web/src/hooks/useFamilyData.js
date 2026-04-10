@@ -43,7 +43,7 @@ export const useFamilyData = (initialData = []) => {
 
   const [updatingIds, setUpdatingIds] = useState(new Set());
 
-  const handleUpdate = useCallback(async (id, name, born, death, address, alias, isAlive, dacVi) => {
+  const handleUpdate = useCallback(async (id, name, born, death, address, alias, isAlive, dacVi, gender) => {
     try {
       setUpdatingIds(prev => new Set(prev).add(id));
 
@@ -54,7 +54,8 @@ export const useFamilyData = (initialData = []) => {
         is_alive: isAlive,
         bi_danh: alias || null,
         dac_vi: dacVi || null,
-        dia_chi: address || null
+        dia_chi: address || null,
+        ...(gender ? { gender } : {}),
       };
 
       const { error } = await supabase

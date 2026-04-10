@@ -110,20 +110,20 @@ export const renderNode = ({
   const finalNodeHeight = dynamicNodeHeight * scaleFactor;
   const rx = 10 * scaleFactor;
 
+  // Background: light blue for alive, amber/brown for dead (gender-independent)
   const fillColor = (() => {
     if (isSpecialRoot) return 'url(#pattern-root)';
-    if (isSelected) return nodeIsAlive ? '#eff6ff' : (person.gender === 'male' ? '#fff7ed' : '#fff1f2');
-    if (nodeIsAlive) return person.gender === 'male' ? '#eff6ff' : '#fdf4ff';
-    if (isRelated) return person.gender === 'male' ? '#fefce8' : '#fff1f2';
-    return person.gender === 'male' ? '#fffbeb' : '#fdf2f8';
+    if (isSelected) return nodeIsAlive ? '#eff6ff' : '#fff7ed';
+    if (nodeIsAlive) return '#eff6ff';
+    if (isRelated) return '#fefce8';
+    return '#fffbeb';
   })();
 
+  // Border: blue for male, pink for female (gender-based, not alive-based)
   const strokeColor = (() => {
     if (isSpecialRoot) return nodeIsAlive ? '#0369a1' : '#92400e';
     if (isSelected) return '#dc2626';
-    if (nodeIsAlive) return person.gender === 'male' ? '#2563eb' : '#a21caf';
-    if (isRelated) return '#b45309';
-    return person.gender === 'male' ? '#b45309' : '#be185d';
+    return person.gender === 'male' ? '#2563eb' : '#db2777';
   })();
 
   const strokeWidth = isSpecialRoot ? 4 : (isSelected ? 3 : (isRelated ? 2 : 1.5));
@@ -138,11 +138,9 @@ export const renderNode = ({
     .attr('stroke-width', strokeWidth)
     .attr('filter', isSelected ? `url(#${selectedFilterId})` : (isUpdating ? null : `url(#${filterId})`));
 
-  // Top accent bar (gender color strip) — clipped inside the card border
+  // Top accent bar — blue for male, pink for female (gender-based)
   if (!isSpecialRoot) {
-    const accentColor = nodeIsAlive
-      ? (person.gender === 'male' ? '#2563eb' : '#a21caf')
-      : (person.gender === 'male' ? '#b45309' : '#be185d');
+    const accentColor = person.gender === 'male' ? '#2563eb' : '#db2777';
     const accentH = 6;
     const accentClipId = `accent-clip-${person.id}`;
     // Define a clipPath matching the card shape so the accent stays within rounded corners
