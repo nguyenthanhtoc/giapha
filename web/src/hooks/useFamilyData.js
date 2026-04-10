@@ -114,6 +114,8 @@ export const useFamilyData = (initialData = []) => {
         parent_id: data.parentId || null,
         spouse_id: data.spouseId || null,
         role: data.role || null,
+        born: data.born || null,
+        death: data.death || null,
         is_alive: data.isAlive !== undefined ? data.isAlive : true,
         bi_danh: data.alias || null,
         dia_chi: data.address || null
