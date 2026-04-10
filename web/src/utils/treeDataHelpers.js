@@ -48,7 +48,9 @@ export const prepareTreeData = (data, collapsedIds, focusId, showFromGen15) => {
     });
   }
 
-  const treeLayout = d3.tree().nodeSize([210, 192]);
+  const treeLayout = d3.tree()
+    .nodeSize([210, 192])
+    .separation((a, b) => a.parent === b.parent ? 1 : 1.2);
   treeLayout(root);
 
   const generationLabels = [
