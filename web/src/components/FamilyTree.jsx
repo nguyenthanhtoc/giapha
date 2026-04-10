@@ -139,13 +139,12 @@ export default function FamilyTree() {
       {isMinimalMode && (
         <button
           onClick={(e) => { e.stopPropagation(); setIsMinimalMode(false); }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-amber-900/80 hover:bg-amber-900 text-[#fffbeb] shadow-xl backdrop-blur-sm border border-amber-700/50 transition-all duration-200 hover:scale-105 animate-bounce"
+          className="absolute top-6 right-8 z-50 flex items-center justify-center w-9 h-9 rounded-full bg-amber-900/80 hover:bg-amber-900 text-[#fffbeb] shadow-xl border border-amber-700/50 transition-colors duration-200"
           title="Hiện UI"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
             <path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .75.75v10.638l3.96-4.158a.75.75 0 1 1 1.08 1.04l-5.25 5.5a.75.75 0 0 1-1.08 0l-5.25-5.5a.75.75 0 1 1 1.08-1.04l3.96 4.158V3.75A.75.75 0 0 1 10 3Z" clipRule="evenodd" />
           </svg>
-          <span className="text-xs font-bold font-spectral tracking-wider">Hiện UI</span>
         </button>
       )}
 
