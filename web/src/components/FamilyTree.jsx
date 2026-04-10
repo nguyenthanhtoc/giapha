@@ -205,7 +205,7 @@ export default function FamilyTree() {
       )}
 
       {/* Decorative Header Banner */}
-      <div className={`fixed left-0 right-0 flex justify-center z-30 select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-none'}`} style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
+      <div className={`fixed z-30 select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-none'}`} style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)', left: '50%', transform: 'translateX(-50%)' }}>
         <div className="relative bg-[#fffbeb] border border-amber-800 sm:border-2 px-4 sm:px-10 py-2 sm:py-3 rounded-md shadow-2xl flex items-center justify-center min-w-[200px] sm:min-w-[300px]">
           <div className="absolute -left-1 sm:-left-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
           <div className="absolute -right-1 sm:-right-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
@@ -245,7 +245,7 @@ export default function FamilyTree() {
       />
 
       {/* Zoom Indicator — top-left on sm+, bottom-left on mobile */}
-      <div className={`fixed left-4 sm:bottom-auto sm:top-6 sm:left-8 z-30 pointer-events-none select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)' }}>
+      <div className={`fixed sm:bottom-auto sm:top-6 z-30 pointer-events-none select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)', left: 'calc(env(safe-area-inset-left, 0px) + 1rem)' }}>
         <div className="bg-[#fffbeb]/90 backdrop-blur-sm border border-amber-900/30 px-3 py-1.5 rounded shadow-lg flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-tighter">Thu Phóng</span>
@@ -262,7 +262,7 @@ export default function FamilyTree() {
       </div>
 
       {/* Generation Filter Toggle — top-right on sm+, bottom-right on mobile */}
-      <div className={`fixed right-4 sm:bottom-auto sm:top-6 sm:right-8 z-30 flex items-center gap-2 transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)' }}>
+      <div className={`fixed sm:bottom-auto sm:top-6 z-30 flex items-center gap-2 transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)', right: 'calc(env(safe-area-inset-right, 0px) + 1rem)' }}>
         <button
           onClick={(e) => { e.stopPropagation(); setShowFromGen15(!showFromGen15); }}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all duration-300 shadow-lg ${
