@@ -228,34 +228,48 @@ const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, sc
     const sharedAddress = (person.address && person.address.trim()) ? person.address.trim() : null;
     const hasAddress = !!sharedAddress;
 
+    // Row heights and gaps — must match treeDataHelpers.js exactly
     const NAME_H = 16, SUB_H = 12, GAP = 3;
-    const SP_NAME_H = 14, SP_SUB_H = 11, SP_DIV_GAP = 10;
+    const SP_NAME_H = 14, SP_SUB_H = 11;
+    // SP_DIV_GAP: total gap between last main row and spouse name row
+    // = gap before divider line + gap after divider line
+    // Using GAP*2 + line(1) ≈ 7, rounded to 8 for visual comfort
+    const SP_DIV_GAP = 8;
 
     // Pre-compute main lifespan
     const mainLifespan = formatLifespan(person);
 
-    // Calculate total text height for vertical centering
-    // Address is only shown once at the bottom (not per spouse)
+    // Calculate total text height for vertical centering.
+    // This MUST match the calculation in treeDataHelpers.js (minus verticalPadding).
     let totalH = NAME_H;
     if (hasAlias) totalH += GAP + SUB_H;
     if (mainLifespan) totalH += GAP + SUB_H;
     personSpouses.forEach(s => {
+      // SP_DIV_GAP replaces GAP between last row and spouse name
       totalH += SP_DIV_GAP + SP_NAME_H;
       if (formatLifespan(s)) totalH += GAP + SP_SUB_H;
     });
     if (hasAddress) totalH += GAP + SUB_H;
 
-    // currentY tracks the center of the current row (unscaled)
+    // currentY = center of first row, measured from text block center
     let currentY = -totalH / 2 + NAME_H / 2;
-    let prevH = NAME_H; // height of the last rendered row
+    let prevH = NAME_H;
 
-    const advance = (prevRowH, nextRowH, extra = 0) => {
-      currentY += prevRowH / 2 + GAP + extra + nextRowH / 2;
+    // advance moves currentY from center of prev row to center of next row
+    const advance = (prevRowH, nextRowH, gap = GAP) => {
+      currentY += prevRowH / 2 + gap + nextRowH / 2;
       prevH = nextRowH;
     };
 
+    // accentH offset: shift text block down by half the accent bar height
+    // so text appears centered in the card area below the accent bar
+    const accentOffset = isSpecialRoot ? 0 : 3;
+
     const appendText = (attrs) => {
-      const t = nodeGroup.append('text').attr('dy', currentY * scaleFactor).attr('text-anchor', 'middle');
+      const t = nodeGroup.append('text')
+        .attr('y', currentY * scaleFactor + accentOffset)
+        .attr('dominant-baseline', 'central')
+        .attr('text-anchor', 'middle');
       Object.entries(attrs).forEach(([k, v]) => t.attr(k, v));
       return t;
     };
@@ -292,8 +306,8 @@ const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, sc
       const spouseLifespan = formatLifespan(s);
       const spouseColor = s.gender === 'female' ? '#be185d' : '#1e40af';
 
-      // Divider line — advance with extra gap, text sits SP_DIV_GAP/2 below line
-      const dividerY = (currentY + prevH / 2 + SP_DIV_GAP / 2) * scaleFactor;
+      // Divider line sits halfway through SP_DIV_GAP between prev row and spouse name
+      const dividerY = (currentY + prevH / 2 + SP_DIV_GAP / 2) * scaleFactor + accentOffset;
       nodeGroup.append('line')
         .attr('x1', -finalNodeWidth * 0.4).attr('x2', finalNodeWidth * 0.4)
         .attr('y1', dividerY).attr('y2', dividerY)
@@ -301,8 +315,8 @@ const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, sc
         .attr('stroke-width', 0.6)
         .attr('opacity', 0.35);
 
-      currentY += prevH / 2 + SP_DIV_GAP + SP_NAME_H / 2;
-      prevH = SP_NAME_H;
+      // Advance using SP_DIV_GAP instead of default GAP
+      advance(prevH, SP_NAME_H, SP_DIV_GAP);
 
       const label = s.gender === 'female' ? '♀ ' : '♂ ';
       appendText({
