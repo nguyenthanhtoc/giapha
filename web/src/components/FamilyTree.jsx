@@ -204,7 +204,7 @@ export default function FamilyTree() {
       )}
 
       {/* Decorative Header Banner */}
-      <div className={`absolute top-4 sm:top-6 left-1/2 transform -translate-x-1/2 z-20 select-none w-[90%] sm:w-auto transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none -translate-y-4' : 'opacity-100 pointer-events-none'}`}>
+      <div className={`absolute left-1/2 transform -translate-x-1/2 z-20 select-none w-[90%] sm:w-auto transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none -translate-y-4' : 'opacity-100 pointer-events-none'}`} style={{ top: 'max(1rem, env(safe-area-inset-top, 0px) + 0.5rem)' }}>
         <div className="relative bg-[#fffbeb] border border-amber-800 sm:border-2 px-4 sm:px-10 py-2 sm:py-3 rounded-md shadow-2xl flex items-center justify-center min-w-[200px] sm:min-w-[300px]">
           <div className="absolute -left-1 sm:-left-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
           <div className="absolute -right-1 sm:-right-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
@@ -244,7 +244,7 @@ export default function FamilyTree() {
       />
 
       {/* Zoom Indicator — top-left on sm+, bottom-left on mobile */}
-      <div className={`absolute bottom-4 left-4 sm:bottom-auto sm:top-6 sm:left-8 z-30 pointer-events-none select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`absolute left-4 sm:bottom-auto sm:top-6 sm:left-8 z-30 pointer-events-none select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ bottom: 'max(1rem, env(safe-area-inset-bottom, 1rem) + 0.5rem)' }}>
         <div className="bg-[#fffbeb]/90 backdrop-blur-sm border border-amber-900/30 px-3 py-1.5 rounded shadow-lg flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-tighter">Thu Phóng</span>
@@ -261,7 +261,7 @@ export default function FamilyTree() {
       </div>
 
       {/* Generation Filter Toggle — top-right on sm+, bottom-right on mobile */}
-      <div className={`absolute bottom-4 right-4 sm:bottom-auto sm:top-6 sm:right-8 z-30 flex items-center gap-2 transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`absolute right-4 sm:bottom-auto sm:top-6 sm:right-8 z-30 flex items-center gap-2 transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ bottom: 'max(1rem, env(safe-area-inset-bottom, 1rem) + 0.5rem)' }}>
         <button
           onClick={(e) => { e.stopPropagation(); setShowFromGen15(!showFromGen15); }}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all duration-300 shadow-lg ${
