@@ -55,7 +55,7 @@ export default function FamilyTree() {
               while (n.parentId) { n = mainNodes.find(m => m.id === n.parentId); if (!n) break; d++; }
               return d;
             };
-            if (getDepth(parent) < 5) return;
+            if (getDepth(parent) < 4) return;
           }
           setSelectedPerson(parent);
         }
