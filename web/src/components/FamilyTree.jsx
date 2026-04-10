@@ -194,8 +194,7 @@ export default function FamilyTree() {
       {isMinimalMode && (
         <button
           onClick={(e) => { e.stopPropagation(); setIsMinimalMode(false); }}
-          className="fixed right-4 sm:bottom-auto sm:top-6 sm:right-8 z-50 flex items-center justify-center w-8 h-8 rounded-full bg-amber-900/80 hover:bg-amber-900 text-[#fffbeb] shadow-xl border border-amber-700/50 transition-colors duration-200"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)' }}
+          className="fixed z-50 flex items-center justify-center w-8 h-8 rounded-full bg-amber-900/80 hover:bg-amber-900 text-[#fffbeb] shadow-xl border border-amber-700/50 transition-colors duration-200 ui-float-right"
           title="Hiện UI"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
