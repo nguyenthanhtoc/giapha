@@ -34,12 +34,11 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
     relatedIds.has(groupLinks[0].source.id) &&
     groupLinks.some(d => relatedIds.has(d.target.id));
 
-  // Rail (horizontal) is highlighted only if multiple children are related,
-  // to avoid highlighting the entire sibling rail when only one child is selected
+  // Rail (horizontal) is highlighted if the parent is related AND at least one child is related
   const isRailRelated = (groupLinks) =>
     selectedId &&
     relatedIds.has(groupLinks[0].source.id) &&
-    groupLinks.filter(d => relatedIds.has(d.target.id)).length >= 2;
+    groupLinks.some(d => relatedIds.has(d.target.id));
 
   const getStroke = (d) => {
     if (!selectedId) return '#a16207';
@@ -88,7 +87,18 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
 
       // Horizontal rail spanning all siblings (only if more than one)
       if (targets.length > 1) {
-        pathSegments.push({ d: `M${minX},${railY} H${maxX}`, link: groupLinks[0], groupLinks, isRail: true });
+        // Always draw the full dim rail
+        pathSegments.push({ d: `M${minX},${railY} H${maxX}`, link: groupLinks[0], groupLinks: null, isRail: true });
+
+        // If selection active, overlay a highlighted segment spanning only related children
+        if (selectedId) {
+          const relatedTargets = groupLinks.filter(d => relatedIds.has(d.target.id)).map(d => d.target);
+          if (relatedTargets.length > 0) {
+            const relMinX = Math.min(...relatedTargets.map(t => t.x));
+            const relMaxX = Math.max(...relatedTargets.map(t => t.x));
+            pathSegments.push({ d: `M${relMinX},${railY} H${relMaxX}`, link: groupLinks[0], groupLinks, isRail: true });
+          }
+        }
       }
 
       // Branch from rail down to each child top
@@ -111,7 +121,21 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
 
     // Draw horizontal rail spanning all children (only if more than one child)
     if (targets.length > 1) {
-      pathSegments.push({ d: `M${minX},${railY} H${maxX}`, link: groupLinks[0], groupLinks, isRail: true });
+      // Always draw the full dim rail
+      pathSegments.push({ d: `M${minX},${railY} H${maxX}`, link: groupLinks[0], groupLinks: null, isRail: true });
+
+      // If selection active, overlay a highlighted segment spanning only related children
+      if (selectedId && relatedIds.has(source.id)) {
+        const relatedTargets = groupLinks.filter(d => relatedIds.has(d.target.id)).map(d => d.target);
+        if (relatedTargets.length > 0) {
+          const relMinX = Math.min(...relatedTargets.map(t => t.x));
+          const relMaxX = Math.max(...relatedTargets.map(t => t.x));
+          // Clamp: at minimum, highlight from trunk X to the related child X
+          const highlightMinX = Math.min(relMinX, source.x);
+          const highlightMaxX = Math.max(relMaxX, source.x);
+          pathSegments.push({ d: `M${highlightMinX},${railY} H${highlightMaxX}`, link: groupLinks[0], groupLinks, isRail: true });
+        }
+      }
     }
 
     // Draw branch from rail down to each child top
@@ -127,9 +151,21 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
     .data(pathSegments)
     .join('path')
     .attr('d', seg => seg.d)
-    .attr('stroke', seg => seg.groupLinks ? getGroupStroke(seg.groupLinks, seg.isRail) : getStroke(seg.link))
-    .attr('stroke-opacity', seg => seg.groupLinks ? getGroupOpacity(seg.groupLinks, seg.isRail) : getOpacity(seg.link))
-    .attr('stroke-width', seg => seg.groupLinks ? getGroupWidth(seg.groupLinks, seg.isRail) : getWidth(seg.link))
+    .attr('stroke', seg => {
+      if (seg.groupLinks) return getGroupStroke(seg.groupLinks, seg.isRail);
+      if (seg.isRail) return selectedId ? '#d1d5db' : '#a16207'; // full dim rail
+      return getStroke(seg.link);
+    })
+    .attr('stroke-opacity', seg => {
+      if (seg.groupLinks) return getGroupOpacity(seg.groupLinks, seg.isRail);
+      if (seg.isRail) return selectedId ? 0.2 : 0.5; // full dim rail
+      return getOpacity(seg.link);
+    })
+    .attr('stroke-width', seg => {
+      if (seg.groupLinks) return getGroupWidth(seg.groupLinks, seg.isRail);
+      if (seg.isRail) return selectedId ? 1 : 1.5; // full dim rail
+      return getWidth(seg.link);
+    })
     .attr('stroke-linejoin', 'round');
 
   return linkGroup;
