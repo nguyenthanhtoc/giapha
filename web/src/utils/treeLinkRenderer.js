@@ -1,53 +1,98 @@
 import * as d3 from 'd3';
 
 export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 }) => {
-  const linkGenerator = d => {
-    const xSource = d.source.x, ySource = d.source.y;
-    const xTarget = d.target.x, yTarget = d.target.y;
-    const sourcePerson = d.source.data;
-    const isSourceRoot = d.source.depth === 1;
-    const isSourceSpecial = sourcePerson.name === 'Nguyễn Thanh Dung' || isSourceRoot;
-    const sourceHeight = d.source.dynamicNodeHeight || 65;
-    const targetHeight = d.target.dynamicNodeHeight || 65;
-    const sourceOffset = (sourceHeight * (isSourceSpecial ? 1.75 : 1.0)) / 2;
-    const targetOffset = targetHeight / 2;
+  // Group children by parent so we can draw a shared trunk per parent
+  const childrenByParent = new Map();
+  links.forEach(d => {
+    const pid = d.source.id;
+    if (!childrenByParent.has(pid)) childrenByParent.set(pid, []);
+    childrenByParent.get(pid).push(d);
+  });
 
-    const startY = ySource + sourceOffset;
-    const endY = yTarget - targetOffset;
-
-    if (showFromGen15 && d.source.depth < 5) {
-      // Source node was filtered out (not shifted), so use target's x and
-      // a fixed entry point just above the target node instead.
-      const trunkY = endY - 40;
-      return `M${xTarget},${trunkY} V${endY}`;
-    }
-
-    const midY = (startY + endY) / 2;
-    return `M${xSource},${startY} V${midY} H${xTarget} V${endY}`;
+  const isSpecialNode = (node) => {
+    const isRootNode = node.depth === 1;
+    return node.data.name === 'Nguyễn Thanh Dung' || isRootNode;
   };
 
-  return g.append('g')
-    .attr('fill', 'none')
-    .attr('stroke', '#a16207')
-    .attr('stroke-opacity', 0.5)
-    .attr('stroke-width', 1.5)
-    .selectAll('path')
-    .data(links)
-    .join('path')
-    .attr('d', linkGenerator)
-    .attr('stroke', d => {
-        if (!selectedId) return '#a16207';
-        const isRelated = relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
-        return isRelated ? '#92400e' : '#d1d5db';
-    })
-    .attr('stroke-opacity', d => {
-        if (!selectedId) return 0.5;
-        const isRelated = relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
-        return isRelated ? 0.9 : 0.2;
-    })
-    .attr('stroke-width', d => {
-        if (!selectedId) return 1.5;
-        const isRelated = relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
-        return isRelated ? 3 : 1;
+  const getBottomY = (node) => {
+    const h = node.dynamicNodeHeight || 65;
+    const scale = isSpecialNode(node) ? 1.75 : 1.0;
+    return node.y + (h * scale) / 2;
+  };
+
+  const getTopY = (node) => {
+    const h = node.dynamicNodeHeight || 65;
+    return node.y - h / 2;
+  };
+
+  const isRelatedLink = (d) =>
+    selectedId && relatedIds.has(d.source.id) && relatedIds.has(d.target.id);
+
+  const getStroke = (d) => {
+    if (!selectedId) return '#a16207';
+    return isRelatedLink(d) ? '#92400e' : '#d1d5db';
+  };
+  const getOpacity = (d) => {
+    if (!selectedId) return 0.5;
+    return isRelatedLink(d) ? 0.9 : 0.2;
+  };
+  const getWidth = (d) => {
+    if (!selectedId) return 1.5;
+    return isRelatedLink(d) ? 3 : 1;
+  };
+
+  const pathSegments = [];
+
+  childrenByParent.forEach((groupLinks) => {
+    const source = groupLinks[0].source;
+
+    if (showFromGen15 && source.depth < 5) {
+      // Source node filtered out — draw short stub above each target
+      groupLinks.forEach(d => {
+        const endY = getTopY(d.target);
+        const stubY = endY - 30;
+        pathSegments.push({ d: `M${d.target.x},${stubY} V${endY}`, link: d });
+      });
+      return;
+    }
+
+    const startY = getBottomY(source);
+    const sourceX = source.x;
+
+    const targets = groupLinks.map(d => d.target);
+    const minX = Math.min(...targets.map(t => t.x));
+    const maxX = Math.max(...targets.map(t => t.x));
+
+    // Trunk drops from parent bottom to a horizontal rail midway between
+    // the parent bottom and the topmost child top
+    const minChildTopY = Math.min(...targets.map(t => getTopY(t)));
+    const railY = startY + (minChildTopY - startY) * 0.55;
+
+    // Draw trunk: parent bottom → rail
+    pathSegments.push({ d: `M${sourceX},${startY} V${railY}`, link: groupLinks[0] });
+
+    // Draw horizontal rail spanning all children (only if more than one child)
+    if (targets.length > 1) {
+      pathSegments.push({ d: `M${minX},${railY} H${maxX}`, link: groupLinks[0] });
+    }
+
+    // Draw branch from rail down to each child top
+    groupLinks.forEach(d => {
+      const endY = getTopY(d.target);
+      pathSegments.push({ d: `M${d.target.x},${railY} V${endY}`, link: d });
     });
+  });
+
+  const linkGroup = g.append('g').attr('fill', 'none');
+
+  linkGroup.selectAll('path')
+    .data(pathSegments)
+    .join('path')
+    .attr('d', seg => seg.d)
+    .attr('stroke', seg => getStroke(seg.link))
+    .attr('stroke-opacity', seg => getOpacity(seg.link))
+    .attr('stroke-width', seg => getWidth(seg.link))
+    .attr('stroke-linejoin', 'round');
+
+  return linkGroup;
 };
