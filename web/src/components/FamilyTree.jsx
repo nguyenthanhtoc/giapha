@@ -245,7 +245,7 @@ export default function FamilyTree() {
       />
 
       {/* Zoom Indicator — top-left on sm+, bottom-left on mobile */}
-      <div className={`fixed sm:bottom-auto sm:top-6 z-30 pointer-events-none select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)', left: 'calc(env(safe-area-inset-left, 0px) + 1rem)' }}>
+      <div className={`fixed z-30 pointer-events-none select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'} ui-float-left`}>
         <div className="bg-[#fffbeb]/90 backdrop-blur-sm border border-amber-900/30 px-3 py-1.5 rounded shadow-lg flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-tighter">Thu Phóng</span>
@@ -262,7 +262,7 @@ export default function FamilyTree() {
       </div>
 
       {/* Generation Filter Toggle — top-right on sm+, bottom-right on mobile */}
-      <div className={`fixed sm:bottom-auto sm:top-6 z-30 flex items-center gap-2 transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)', right: 'calc(env(safe-area-inset-right, 0px) + 1rem)' }}>
+      <div className={`fixed z-30 flex items-center gap-2 transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'} ui-float-right`}>
         <button
           onClick={(e) => { e.stopPropagation(); setShowFromGen15(!showFromGen15); }}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all duration-300 shadow-lg ${
