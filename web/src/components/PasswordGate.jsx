@@ -6,7 +6,7 @@ const STORAGE_KEY = 'giapha_auth';
 const CORRECT_PASSWORD = process.env.NEXT_PUBLIC_PASSWORD;
 
 export default function PasswordGate({ children }) {
-  const [unlocked, setUnlocked] = useState(false);
+  const [unlocked, setUnlocked] = useState(true); // TODO: re-enable password gate
   const [input, setInput] = useState('');
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
