@@ -29,7 +29,7 @@ body {
 /* UI floating buttons: bottom on mobile, top on desktop */
 .ui-float-left,
 .ui-float-right {
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 4rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 5px);
   top: auto;
 }
 .ui-float-left  { left:  calc(env(safe-area-inset-left,  0px) + 1rem); }
