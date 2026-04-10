@@ -45,13 +45,28 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
 
   childrenByParent.forEach((groupLinks) => {
     const source = groupLinks[0].source;
+    const targets = groupLinks.map(d => d.target);
+    const minX = Math.min(...targets.map(t => t.x));
+    const maxX = Math.max(...targets.map(t => t.x));
+    const minChildTopY = Math.min(...targets.map(t => getTopY(t)));
 
     if (showFromGen15 && source.depth < 5) {
-      // Source node filtered out — draw short stub above each target
+      // Parent node is hidden (filtered out). Still draw the sibling rail so
+      // children of the same parent are visually grouped, but don't draw a
+      // trunk up to the (invisible) parent.
+      // Rail sits a fixed distance above the children.
+      const STUB_H = 28;
+      const railY = minChildTopY - STUB_H;
+
+      // Horizontal rail spanning all siblings (only if more than one)
+      if (targets.length > 1) {
+        pathSegments.push({ d: `M${minX},${railY} H${maxX}`, link: groupLinks[0] });
+      }
+
+      // Branch from rail down to each child top
       groupLinks.forEach(d => {
         const endY = getTopY(d.target);
-        const stubY = endY - 30;
-        pathSegments.push({ d: `M${d.target.x},${stubY} V${endY}`, link: d });
+        pathSegments.push({ d: `M${d.target.x},${railY} V${endY}`, link: d });
       });
       return;
     }
@@ -59,13 +74,8 @@ export const renderLinks = ({ g, links, selectedId, relatedIds, showFromGen15 })
     const startY = getBottomY(source);
     const sourceX = source.x;
 
-    const targets = groupLinks.map(d => d.target);
-    const minX = Math.min(...targets.map(t => t.x));
-    const maxX = Math.max(...targets.map(t => t.x));
-
     // Trunk drops from parent bottom to a horizontal rail midway between
     // the parent bottom and the topmost child top
-    const minChildTopY = Math.min(...targets.map(t => getTopY(t)));
     const railY = startY + (minChildTopY - startY) * 0.55;
 
     // Draw trunk: parent bottom → rail
