@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { capitalizeName } from '@/utils/stringUtils';
 import InfoField from './InfoField';
 import SpouseSection from './SpouseSection';
@@ -29,13 +29,6 @@ export default function InfoPanel({
   const spouses = allMembers?.filter(m => m.spouseId === selectedPerson?.id) || [];
 
   useEffect(() => {
-    if (!selectedPerson) return;
-    const handleKeyDown = (e) => { if (e.key === 'Escape') setSelectedPerson(null); };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedPerson, setSelectedPerson]);
-
-  useEffect(() => {
     if (selectedPerson) {
       setEditName(selectedPerson.name || '');
       setEditBorn(selectedPerson.born || '');
@@ -57,11 +50,11 @@ export default function InfoPanel({
       isAlive: s.isAlive !== false
     }));
     setEditSpouseStates(spouseList);
-    
+
     setIsSaving(false);
   }, [selectedPerson, allMembers]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const capitalizedName = capitalizeName(editName);
     setEditName(capitalizedName);
 
@@ -82,7 +75,21 @@ export default function InfoPanel({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [editName, editBorn, editDeath, editAddress, editAlias, editIsAlive, editDacVi, editSpouseStates, selectedPerson, onUpdate, setSelectedPerson]);
+
+  useEffect(() => {
+    if (!selectedPerson) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') { setSelectedPerson(null); return; }
+      if (e.key === 'Enter' && isAdmin && !isSaving) {
+        if (e.target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedPerson, setSelectedPerson, isAdmin, isSaving, handleSave]);
 
   if (!selectedPerson) return null;
 
