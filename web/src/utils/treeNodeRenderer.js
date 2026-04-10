@@ -318,13 +318,12 @@ const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, sc
       // Advance using SP_DIV_GAP instead of default GAP
       advance(prevH, SP_NAME_H, SP_DIV_GAP);
 
-      const label = s.gender === 'female' ? '♀ ' : '♂ ';
       appendText({
         fill: isSpecialRoot ? '#92400e' : spouseColor,
         'font-size': isSpecialRoot ? '24px' : '13px',
         'font-weight': 'bold',
         class: isSpecialRoot ? 'font-spectral' : '',
-      }).text(`${label}${s.name}`);
+      }).text(s.name);
 
       if (spouseLifespan) {
         advance(prevH, SP_SUB_H);

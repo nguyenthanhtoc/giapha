@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Skill(code-review-skill)",
-      "Skill(code-review-skill:*)"
+      "Skill(code-review-skill:*)",
+      "Bash(ls /Users/vinh/Documents/project2026/giapha/web/.env*)",
+      "Bash(ls /Users/vinh/Documents/project2026/giapha/.env*)"
     ]
   }
 }
