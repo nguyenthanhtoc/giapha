@@ -20,6 +20,7 @@ export default function FamilyTree() {
   const [showDetails, setShowDetails] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(0.85);
   const [showFromGen15, setShowFromGen15] = useState(true);
+  const [isMinimalMode, setIsMinimalMode] = useState(false);
   
   const { 
     mergedData, 
@@ -134,8 +135,22 @@ export default function FamilyTree() {
       style={{ backgroundImage: "url('./bg_parchment.png')" }}
       onClick={() => setSelectedPerson(null)}
     >
+      {/* Minimal Mode Toggle — restore UI button (only visible in minimal mode) */}
+      {isMinimalMode && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setIsMinimalMode(false); }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-amber-900/80 hover:bg-amber-900 text-[#fffbeb] shadow-xl backdrop-blur-sm border border-amber-700/50 transition-all duration-200 hover:scale-105 animate-bounce"
+          title="Hiện UI"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+            <path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .75.75v10.638l3.96-4.158a.75.75 0 1 1 1.08 1.04l-5.25 5.5a.75.75 0 0 1-1.08 0l-5.25-5.5a.75.75 0 1 1 1.08-1.04l3.96 4.158V3.75A.75.75 0 0 1 10 3Z" clipRule="evenodd" />
+          </svg>
+          <span className="text-xs font-bold font-spectral tracking-wider">Hiện UI</span>
+        </button>
+      )}
+
       {/* Decorative Header Banner */}
-      <div className="absolute top-4 sm:top-6 left-1/2 transform -translate-x-1/2 z-20 select-none pointer-events-none w-[90%] sm:w-auto">
+      <div className={`absolute top-4 sm:top-6 left-1/2 transform -translate-x-1/2 z-20 select-none w-[90%] sm:w-auto transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none -translate-y-4' : 'opacity-100 pointer-events-none'}`}>
         <div className="relative bg-[#fffbeb] border border-amber-800 sm:border-2 px-4 sm:px-10 py-2 sm:py-3 rounded-md shadow-2xl flex items-center justify-center min-w-[200px] sm:min-w-[300px]">
           <div className="absolute -left-1 sm:-left-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
           <div className="absolute -right-1 sm:-right-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
@@ -153,7 +168,7 @@ export default function FamilyTree() {
       <svg ref={svgRef} className="w-full h-full cursor-grab active:cursor-grabbing touch-none" />
 
       <InfoPanel
-        selectedPerson={showDetails ? selectedPerson : null}
+        selectedPerson={showDetails && !isMinimalMode ? selectedPerson : null}
         setSelectedPerson={(p) => {
           if (!p) setShowDetails(false);
           setSelectedPerson(p);
@@ -175,7 +190,7 @@ export default function FamilyTree() {
       />
 
       {/* Zoom Indicator — top-left on sm+, bottom-left on mobile */}
-      <div className="absolute bottom-4 left-4 sm:bottom-auto sm:top-6 sm:left-8 z-30 pointer-events-none select-none">
+      <div className={`absolute bottom-4 left-4 sm:bottom-auto sm:top-6 sm:left-8 z-30 pointer-events-none select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <div className="bg-[#fffbeb]/90 backdrop-blur-sm border border-amber-900/30 px-3 py-1.5 rounded shadow-lg flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-tighter">Thu Phóng</span>
@@ -192,9 +207,20 @@ export default function FamilyTree() {
       </div>
 
       {/* Generation Filter Toggle — top-right on sm+, bottom-right on mobile */}
-      <div className="absolute bottom-4 right-4 sm:bottom-auto sm:top-6 sm:right-8 z-30">
+      <div className={`absolute bottom-4 right-4 sm:bottom-auto sm:top-6 sm:right-8 z-30 flex items-center gap-2 transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        {/* Hide UI Toggle Button */}
         <button
-          onClick={() => setShowFromGen15(!showFromGen15)}
+          onClick={(e) => { e.stopPropagation(); setIsMinimalMode(true); }}
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-[#fffbeb]/90 hover:bg-[#fffbeb] border border-amber-900/30 hover:border-amber-900/60 text-amber-900/60 hover:text-amber-900 shadow-lg transition-all duration-200 hover:scale-110"
+          title="Ẩn UI"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+            <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+            <path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" clipRule="evenodd" />
+          </svg>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowFromGen15(!showFromGen15); }}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all duration-300 shadow-lg ${
             showFromGen15
               ? 'bg-amber-900 border-amber-900 text-[#fffbeb]'
