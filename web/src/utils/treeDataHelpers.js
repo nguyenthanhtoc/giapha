@@ -76,17 +76,17 @@ export const prepareTreeData = (data, collapsedIds, focusId, showFromGen15) => {
     const hasAlias = !!(person.alias && person.alias.trim());
     const hasAddress = !!(person.address && person.address.trim());
     const nameRowHeight = 16, subRowHeight = 12, spacing = 3;
-    const spouseNameRowHeight = 14, spouseSubRowHeight = 11, spouseDivGap = 6;
+    const spouseNameRowHeight = 14, spouseSubRowHeight = 11, spouseDivGap = 10;
 
     let totalHeight = nameRowHeight;
     if (hasAlias) totalHeight += spacing + subRowHeight;
     if (hasLifespan(person)) totalHeight += spacing + subRowHeight;
-    if (hasAddress) totalHeight += spacing + subRowHeight;
     personSpouses.forEach(s => {
       totalHeight += spouseDivGap + spouseNameRowHeight;
       if (hasLifespan(s)) totalHeight += spacing + spouseSubRowHeight;
-      if (s.address && s.address.trim()) totalHeight += spacing + spouseSubRowHeight;
     });
+    // Address shown once at the bottom (shared for the whole family)
+    if (hasAddress) totalHeight += spacing + subRowHeight;
 
     const verticalPadding = 28;
     d.dynamicNodeHeight = Math.max(70, totalHeight + verticalPadding);

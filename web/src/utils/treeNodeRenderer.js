@@ -138,21 +138,29 @@ export const renderNode = ({
     .attr('stroke-width', strokeWidth)
     .attr('filter', isSelected ? `url(#${selectedFilterId})` : (isUpdating ? null : `url(#${filterId})`));
 
-  // Top accent bar (gender color strip)
+  // Top accent bar (gender color strip) — clipped inside the card border
   if (!isSpecialRoot) {
     const accentColor = nodeIsAlive
       ? (person.gender === 'male' ? '#2563eb' : '#a21caf')
       : (person.gender === 'male' ? '#b45309' : '#be185d');
-    const accentH = 4;
-    // Clip the accent to the top-rounded corners using a small rect offset
+    const accentH = 6;
+    const accentClipId = `accent-clip-${person.id}`;
+    // Define a clipPath matching the card shape so the accent stays within rounded corners
+    defs.append('clipPath').attr('id', accentClipId)
+      .append('rect')
+      .attr('x', -finalNodeWidth / 2 + strokeWidth / 2)
+      .attr('y', -finalNodeHeight / 2 + strokeWidth / 2)
+      .attr('width', finalNodeWidth - strokeWidth)
+      .attr('height', finalNodeHeight - strokeWidth)
+      .attr('rx', rx - strokeWidth / 2)
+      .attr('ry', rx - strokeWidth / 2);
     nodeGroup.append('rect')
       .attr('x', -finalNodeWidth / 2 + strokeWidth / 2)
       .attr('y', -finalNodeHeight / 2 + strokeWidth / 2)
       .attr('width', finalNodeWidth - strokeWidth)
       .attr('height', accentH)
-      .attr('rx', rx - strokeWidth / 2)
-      .attr('ry', rx - strokeWidth / 2)
       .attr('fill', accentColor)
+      .attr('clip-path', `url(#${accentClipId})`)
       .attr('opacity', isSelected ? 1 : 0.75);
   }
 
@@ -216,25 +224,26 @@ const renderActionButtons = ({ nodeGroup, isSelected, isUpdating, isAdmin, final
 
 const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor, dynamicNodeHeight, finalNodeWidth }) => {
     const hasAlias = !!(person.alias && person.alias.trim());
-    const hasAddress = !!(person.address && person.address.trim());
-    const totalSpouses = personSpouses.length;
+    // Address shown once at the bottom: use main person's address (shared for whole family)
+    const sharedAddress = (person.address && person.address.trim()) ? person.address.trim() : null;
+    const hasAddress = !!sharedAddress;
 
     const NAME_H = 16, SUB_H = 12, GAP = 3;
-    const SP_NAME_H = 14, SP_SUB_H = 11, SP_DIV_GAP = 6;
+    const SP_NAME_H = 14, SP_SUB_H = 11, SP_DIV_GAP = 10;
 
     // Pre-compute main lifespan
     const mainLifespan = formatLifespan(person);
 
     // Calculate total text height for vertical centering
+    // Address is only shown once at the bottom (not per spouse)
     let totalH = NAME_H;
     if (hasAlias) totalH += GAP + SUB_H;
     if (mainLifespan) totalH += GAP + SUB_H;
-    if (hasAddress) totalH += GAP + SUB_H;
     personSpouses.forEach(s => {
       totalH += SP_DIV_GAP + SP_NAME_H;
       if (formatLifespan(s)) totalH += GAP + SP_SUB_H;
-      if (s.address && s.address.trim()) totalH += GAP + SP_SUB_H;
     });
+    if (hasAddress) totalH += GAP + SUB_H;
 
     // currentY tracks the center of the current row (unscaled)
     let currentY = -totalH / 2 + NAME_H / 2;
@@ -278,21 +287,12 @@ const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, sc
       }).text(mainLifespan);
     }
 
-    if (hasAddress) {
-      advance(prevH, SUB_H);
-      appendText({
-        fill: isSpecialRoot ? '#92400e' : '#6b7280',
-        'font-size': isSpecialRoot ? '18px' : '11px',
-      }).text(`📍 ${person.address}`);
-    }
-
     // Spouses
     personSpouses.forEach((s) => {
       const spouseLifespan = formatLifespan(s);
-      const spouseHasAddress = !!(s.address && s.address.trim());
       const spouseColor = s.gender === 'female' ? '#be185d' : '#1e40af';
 
-      // Divider line — advance with extra gap
+      // Divider line — advance with extra gap, text sits SP_DIV_GAP/2 below line
       const dividerY = (currentY + prevH / 2 + SP_DIV_GAP / 2) * scaleFactor;
       nodeGroup.append('line')
         .attr('x1', -finalNodeWidth * 0.4).attr('x2', finalNodeWidth * 0.4)
@@ -320,13 +320,14 @@ const renderTextContent = ({ nodeGroup, person, personSpouses, isSpecialRoot, sc
           'font-size': isSpecialRoot ? '16px' : '10px',
         }).text(spouseLifespan);
       }
-
-      if (spouseHasAddress) {
-        advance(prevH, SP_SUB_H);
-        appendText({
-          fill: isSpecialRoot ? '#92400e' : '#9ca3af',
-          'font-size': isSpecialRoot ? '16px' : '10px',
-        }).text(`📍 ${s.address}`);
-      }
     });
+
+    // Shared address shown once at the bottom
+    if (hasAddress) {
+      advance(prevH, SUB_H);
+      appendText({
+        fill: isSpecialRoot ? '#92400e' : '#6b7280',
+        'font-size': isSpecialRoot ? '18px' : '11px',
+      }).text(`📍 ${sharedAddress}`);
+    }
 };
