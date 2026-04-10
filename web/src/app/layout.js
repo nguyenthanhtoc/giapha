@@ -17,12 +17,6 @@ const spectral = Spectral({
   weight: ["400", "700", "800"],
 });
 
-export const viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-};
-
 export const metadata = {
   title: "Nguyễn Thanh Tộc - Gia Phả Trực Tuyến",
   description: "Trang tra cứu thông tin gia phả và kết nối dòng họ Nguyễn Thanh. Hệ thống lưu trữ và tra cứu thông tin qua các thế hệ.",
