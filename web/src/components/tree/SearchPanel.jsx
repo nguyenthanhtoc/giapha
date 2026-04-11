@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useSearch } from '@/hooks/useSearch';
 import { parseYear } from '@/utils/stringUtils';
 import { useKeyboardOffset } from '@/hooks/useKeyboardOffset';
@@ -14,8 +14,11 @@ import { useKeyboardOffset } from '@/hooks/useKeyboardOffset';
  *  isOpen    — controlled open/close from parent
  *  onClose   — callback to close the panel
  *  isMinimal — hide entirely when minimal mode is active
+ *
+ * Ref: exposes { focusInput() } so parent can call it directly inside a
+ * user-gesture handler (required for iOS to open the virtual keyboard).
  */
-export default function SearchPanel({ members, onSelect, isOpen, onClose, isMinimal }) {
+const SearchPanel = forwardRef(function SearchPanel({ members, onSelect, isOpen, onClose, isMinimal }, ref) {
   const { query, setQuery, results, totalCount } = useSearch(members);
   const DISPLAY_LIMIT = 5;
   const visibleResults = results.slice(0, DISPLAY_LIMIT);
@@ -23,15 +26,13 @@ export default function SearchPanel({ members, onSelect, isOpen, onClose, isMini
   const inputRef = useRef(null);
   const { keyboardOffset } = useKeyboardOffset();
 
-  // Auto-focus input when panel opens; clear query when closes
+  useImperativeHandle(ref, () => ({
+    focusInput: () => inputRef.current?.focus(),
+  }));
+
+  // Clear query when panel closes
   useEffect(() => {
-    if (isOpen) {
-      // Slight delay so the element is mounted and visible before focus
-      const t = setTimeout(() => inputRef.current?.focus(), 50);
-      return () => clearTimeout(t);
-    } else {
-      setQuery('');
-    }
+    if (!isOpen) setQuery('');
   }, [isOpen, setQuery]);
 
   // Close on Escape
@@ -209,4 +210,6 @@ export default function SearchPanel({ members, onSelect, isOpen, onClose, isMini
       )}
     </div>
   );
-}
+});
+
+export default SearchPanel;

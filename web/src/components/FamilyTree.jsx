@@ -23,6 +23,7 @@ export default function FamilyTree() {
   const [showFromGen15, setShowFromGen15] = useState(true);
   const [isMinimalMode, setIsMinimalMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const searchPanelRef = useRef(null);
   
   const {
     mergedData,
@@ -262,6 +263,7 @@ export default function FamilyTree() {
       <svg ref={svgRef} className="w-full h-full cursor-grab active:cursor-grabbing touch-none" />
 
       <SearchPanel
+        ref={searchPanelRef}
         members={mergedData}
         onSelect={handleSearchSelect}
         isOpen={searchOpen}
@@ -308,7 +310,12 @@ export default function FamilyTree() {
         </div>
         {/* Search toggle button */}
         <button
-          onClick={(e) => { e.stopPropagation(); setSearchOpen(prev => !prev); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const opening = !searchOpen;
+            setSearchOpen(opening);
+            if (opening) searchPanelRef.current?.focusInput();
+          }}
           className={`flex items-center justify-center w-8 h-8 rounded-full border shadow-lg transition-all duration-200 hover:scale-110 ${
             searchOpen
               ? 'bg-amber-900 border-amber-900 text-[#fffbeb]'
