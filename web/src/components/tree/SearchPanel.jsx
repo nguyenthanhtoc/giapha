@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useSearch } from '@/hooks/useSearch';
 import { parseYear } from '@/utils/stringUtils';
+import { useKeyboardOffset } from '@/hooks/useKeyboardOffset';
 
 /**
  * SearchPanel — floating search UI, toggled by an external button.
@@ -20,6 +21,7 @@ export default function SearchPanel({ members, onSelect, isOpen, onClose, isMini
   const visibleResults = results.slice(0, DISPLAY_LIMIT);
   const hiddenCount = totalCount - visibleResults.length;
   const inputRef = useRef(null);
+  const keyboardOffset = useKeyboardOffset();
 
   // Auto-focus input when panel opens; clear query when closes
   useEffect(() => {
@@ -54,8 +56,10 @@ export default function SearchPanel({ members, onSelect, isOpen, onClose, isMini
   return (
     // fixed + translate-x-0 → creates a containing block for the absolute .search-dropdown child
     // search-panel-pos handles left/bottom/top/width responsive positioning
+    // On mobile, keyboardOffset lifts the panel above the on-screen keyboard
     <div
       className="fixed z-40 translate-x-0 search-panel-pos"
+      style={keyboardOffset > 0 ? { bottom: keyboardOffset + 10, top: 'auto' } : undefined}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Search input bar */}

@@ -3,6 +3,7 @@ import { capitalizeName } from '@/utils/stringUtils';
 import InfoField from './InfoField';
 import SpouseSection from './SpouseSection';
 import AdminActions from './AdminActions';
+import { useKeyboardOffset } from '@/hooks/useKeyboardOffset';
 
 export default function InfoPanel({ 
   selectedPerson, 
@@ -26,6 +27,7 @@ export default function InfoPanel({
   const [editSpouseStates, setEditSpouseStates] = useState([]); // Array of spouse objects for editing
   
   const [isSaving, setIsSaving] = useState(false);
+  const keyboardOffset = useKeyboardOffset();
 
   const spouses = allMembers?.filter(m => m.spouseId === selectedPerson?.id) || [];
 
@@ -96,8 +98,9 @@ export default function InfoPanel({
   if (!selectedPerson) return null;
 
   return (
-    <div 
+    <div
       className="absolute bottom-0 left-0 right-0 sm:bottom-auto sm:left-auto sm:top-1/2 sm:right-1/2 sm:translate-x-1/2 sm:-translate-y-1/2 max-w-none sm:max-w-md w-full z-40 transition-all duration-300 transform translate-y-0 p-4 sm:p-0"
+      style={keyboardOffset > 0 ? { bottom: keyboardOffset, top: 'auto' } : undefined}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="relative bg-[#fdf2d9] border-2 border-amber-900/20 shadow-2xl rounded-2xl overflow-hidden flex flex-col backdrop-blur-sm">
