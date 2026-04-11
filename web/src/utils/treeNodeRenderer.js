@@ -26,14 +26,14 @@ const formatLifespan = (person) => {
 };
 
 export const renderNode = ({
-  gNode, 
-  d, 
-  spousesMap, 
-  updatingIds, 
-  selectedId, 
-  relatedIds, 
-  isAdmin, 
-  focusId, 
+  gNode,
+  d,
+  spousesMap,
+  updatingIds,
+  selectedId,
+  relatedIds,
+  isAdmin,
+  focusId,
   collapsedIds,
   onSelectPerson,
   onShowDetails,
@@ -42,6 +42,7 @@ export const renderNode = ({
   onQuickAddChild,
   onQuickAddSpouse,
   onQuickDelete,
+  onMoveNode,
   svgElement,
   data,
   virtualRootId
@@ -167,7 +168,7 @@ export const renderNode = ({
   }
 
   // Action Buttons
-  renderActionButtons({ nodeGroup, isSelected, isUpdating, isAdmin, finalNodeWidth, finalNodeHeight, person, data, virtualRootId, focusId, collapsedIds, onShowDetails, onSelectPerson, onFocus, onToggleCollapse, onQuickAddChild, onQuickAddSpouse, onQuickDelete });
+  renderActionButtons({ nodeGroup, isSelected, isUpdating, isAdmin, finalNodeWidth, finalNodeHeight, person, data, virtualRootId, focusId, collapsedIds, onShowDetails, onSelectPerson, onFocus, onToggleCollapse, onQuickAddChild, onQuickAddSpouse, onQuickDelete, onMoveNode });
 
   // Text Content
   renderTextContent({ nodeGroup, person, personSpouses, isSpecialRoot, scaleFactor, dynamicNodeHeight, finalNodeWidth });
@@ -181,7 +182,7 @@ export const renderNode = ({
   }
 };
 
-const renderActionButtons = ({ nodeGroup, isSelected, isUpdating, isAdmin, finalNodeWidth, finalNodeHeight, person, data, virtualRootId, focusId, collapsedIds, onShowDetails, onSelectPerson, onFocus, onToggleCollapse, onQuickAddChild, onQuickAddSpouse, onQuickDelete }) => {
+const renderActionButtons = ({ nodeGroup, isSelected, isUpdating, isAdmin, finalNodeWidth, finalNodeHeight, person, data, virtualRootId, focusId, collapsedIds, onShowDetails, onSelectPerson, onFocus, onToggleCollapse, onQuickAddChild, onQuickAddSpouse, onQuickDelete, onMoveNode }) => {
     if (isSelected && !isUpdating) {
         // Info Button
         const infoBtn = nodeGroup.append('g').attr('class', 'view-action-btn').attr('transform', `translate(${finalNodeWidth / 2 - 15}, ${-finalNodeHeight / 2 - 12})`).style('cursor', 'pointer').on('click', (e) => { e.stopPropagation(); onShowDetails(); });
@@ -221,6 +222,33 @@ const renderActionButtons = ({ nodeGroup, isSelected, isUpdating, isAdmin, final
         const deleteBtn = nodeGroup.append('g').attr('class', 'quick-delete-btn').attr('transform', `translate(${-finalNodeWidth / 2 + 15}, ${-finalNodeHeight / 2 - 12})`).style('cursor', 'pointer').on('click', (e) => { e.stopPropagation(); onQuickDelete(person); });
         deleteBtn.append('circle').attr('r', 10).attr('fill', '#991b1b').attr('stroke', '#fff').attr('stroke-width', 1.5);
         deleteBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '10px').attr('font-weight', 'bold').text('✕');
+
+        // Move left / right buttons (only for selected node with a parent)
+        if (isSelected && person.parentId && person.parentId !== virtualRootId && onMoveNode) {
+            const siblings = data
+              .filter(m => m.parentId === person.parentId && !m.spouseId)
+              .sort((a, b) => {
+                const ao = a.sort_order ?? Infinity;
+                const bo = b.sort_order ?? Infinity;
+                if (ao !== bo) return ao - bo;
+                return a.id < b.id ? -1 : 1;
+              });
+            const idx = siblings.findIndex(m => m.id === person.id);
+            const canMoveLeft = idx > 0;
+            const canMoveRight = idx < siblings.length - 1;
+
+            if (canMoveLeft) {
+                const moveLeftBtn = nodeGroup.append('g').attr('class', 'move-btn').attr('transform', `translate(${-finalNodeWidth / 2 - 14}, ${finalNodeHeight / 2 + 12})`).style('cursor', 'pointer').on('click', (e) => { e.stopPropagation(); onMoveNode(person.id, 'left'); });
+                moveLeftBtn.append('circle').attr('r', 10).attr('fill', '#0369a1').attr('stroke', '#fff').attr('stroke-width', 1.5);
+                moveLeftBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '13px').attr('font-weight', 'bold').text('◀');
+            }
+
+            if (canMoveRight) {
+                const moveRightBtn = nodeGroup.append('g').attr('class', 'move-btn').attr('transform', `translate(${finalNodeWidth / 2 + 36}, ${finalNodeHeight / 2 + 12})`).style('cursor', 'pointer').on('click', (e) => { e.stopPropagation(); onMoveNode(person.id, 'right'); });
+                moveRightBtn.append('circle').attr('r', 10).attr('fill', '#0369a1').attr('stroke', '#fff').attr('stroke-width', 1.5);
+                moveRightBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '13px').attr('font-weight', 'bold').text('▶');
+            }
+        }
     }
 };
 

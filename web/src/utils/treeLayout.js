@@ -4,16 +4,17 @@ import { renderLinks } from './treeLinkRenderer';
 import { renderNode } from './treeNodeRenderer';
 import { setupZoom } from './treeZoomHandler';
 
-export const drawFamilyTree = ({ 
-  svgRef, 
-  containerRef, 
-  data, 
+export const drawFamilyTree = ({
+  svgRef,
+  containerRef,
+  data,
   updatingIds = new Set(),
   isAdmin = false,
-  onSelectPerson, 
+  onSelectPerson,
   onQuickAddChild,
   onQuickAddSpouse,
   onQuickDelete,
+  onMoveNode,
   selectedPerson,
   focusId,
   collapsedIds,
@@ -87,6 +88,7 @@ export const drawFamilyTree = ({
       onQuickAddChild,
       onQuickAddSpouse,
       onQuickDelete,
+      onMoveNode,
       svgElement,
       data,
       virtualRootId

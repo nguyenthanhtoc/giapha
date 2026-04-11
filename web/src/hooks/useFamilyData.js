@@ -10,6 +10,7 @@ export const useFamilyData = (initialData = []) => {
       const { data, error } = await supabase
         .from('members')
         .select('*')
+        .order('sort_order', { ascending: true, nullsFirst: false })
         .order('id', { ascending: true });
       
       if (error) throw error;
@@ -20,13 +21,14 @@ export const useFamilyData = (initialData = []) => {
         parentId: m.parent_id,
         spouseId: m.spouse_id,
         highlightDesc: m.highlight_desc,
+        sort_order: m.sort_order ?? null,
         // Resilient mapping for alias, address and is_alive
         alias: m.alias || m.bi_danh || '',
         dacVi: m.dac_vi || '',
         address: m.address || m.dia_chi || '',
         // Default to true if is_alive is null AND death is null/empty
-        isAlive: m.is_alive !== null && m.is_alive !== undefined 
-          ? m.is_alive 
+        isAlive: m.is_alive !== null && m.is_alive !== undefined
+          ? m.is_alive
           : (m.death || m.nam_mat ? false : true)
       }));
 
@@ -145,12 +147,85 @@ export const useFamilyData = (initialData = []) => {
     }
   }, [loadData]);
 
+  const handleMoveNode = useCallback(async (id, direction) => {
+    // Find all siblings (same parent_id, not spouses)
+    const node = mergedData.find(m => m.id === id);
+    if (!node) return { success: false };
+
+    const siblings = mergedData
+      .filter(m => m.parentId === node.parentId && !m.spouseId)
+      .sort((a, b) => {
+        // Sort by current sort_order (from DB), fallback to id order
+        const ao = a.sort_order ?? Infinity;
+        const bo = b.sort_order ?? Infinity;
+        if (ao !== bo) return ao - bo;
+        return a.id < b.id ? -1 : 1;
+      });
+
+    const idx = siblings.findIndex(m => m.id === id);
+    if (idx === -1) return { success: false };
+
+    const swapIdx = direction === 'left' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= siblings.length) return { success: false };
+
+    const nodeA = siblings[idx];
+    const nodeB = siblings[swapIdx];
+
+    // Assign stable order values: use index * 10 for spacing, then swap the two
+    // First normalize all siblings if they don't have sort_order yet
+    const needsNormalize = siblings.some(s => s.sort_order == null);
+
+    try {
+      setUpdatingIds(prev => new Set(prev).add(id));
+
+      if (needsNormalize) {
+        // Set sort_order for all siblings based on current position
+        const updates = siblings.map((s, i) => ({
+          id: s.id,
+          sort_order: (i + 1) * 10
+        }));
+        for (const u of updates) {
+          const { error } = await supabase.from('members').update({ sort_order: u.sort_order }).eq('id', u.id);
+          if (error) throw error;
+        }
+        // Now swap A and B
+        const newOrderA = (swapIdx + 1) * 10;
+        const newOrderB = (idx + 1) * 10;
+        const { error: errA } = await supabase.from('members').update({ sort_order: newOrderA }).eq('id', nodeA.id);
+        if (errA) throw errA;
+        const { error: errB } = await supabase.from('members').update({ sort_order: newOrderB }).eq('id', nodeB.id);
+        if (errB) throw errB;
+      } else {
+        // Just swap sort_order values between A and B
+        const orderA = nodeA.sort_order;
+        const orderB = nodeB.sort_order;
+        const { error: errA } = await supabase.from('members').update({ sort_order: orderB }).eq('id', nodeA.id);
+        if (errA) throw errA;
+        const { error: errB } = await supabase.from('members').update({ sort_order: orderA }).eq('id', nodeB.id);
+        if (errB) throw errB;
+      }
+
+      await loadData();
+      return { success: true };
+    } catch (e) {
+      console.error('Move node error:', e);
+      return { success: false, error: e };
+    } finally {
+      setUpdatingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }, [mergedData, loadData]);
+
   return {
     mergedData,
     loadData,
     handleUpdate,
     handleDelete,
     handleAddMember,
+    handleMoveNode,
     updatingIds
   };
 };

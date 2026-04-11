@@ -27,6 +27,7 @@ export default function FamilyTree() {
     handleUpdate,
     handleDelete,
     handleAddMember,
+    handleMoveNode,
     updatingIds
   } = useFamilyData();
 
@@ -119,6 +120,12 @@ export default function FamilyTree() {
       onQuickAddChild: (person) => setQuickAdd({ targetPerson: person, type: 'child' }),
       onQuickAddSpouse: (person) => setQuickAdd({ targetPerson: person, type: 'spouse' }),
       onQuickDelete: handleAdminDelete,
+      onMoveNode: async (id, direction) => {
+        await handleMoveNode(id, direction);
+        // Keep the same node selected after move
+        const moved = mergedData.find(m => m.id === id);
+        if (moved) setSelectedPerson(moved);
+      },
       onZoom: (k) => setZoomLevel(k),
       isFirstLoad: isFirstLoad.current,
       showFromGen15
