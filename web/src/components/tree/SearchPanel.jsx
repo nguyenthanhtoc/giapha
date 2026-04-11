@@ -5,51 +5,64 @@ import { useSearch } from '@/hooks/useSearch';
 import { parseYear } from '@/utils/stringUtils';
 
 /**
- * SearchPanel — floating search UI for the family tree.
+ * SearchPanel — floating search UI, toggled by an external button.
  *
  * Props:
  *  members   — full array of family members
  *  onSelect  — callback(person) when a result is picked
- *  isMinimal — hide when minimal mode is active
+ *  isOpen    — controlled open/close from parent
+ *  onClose   — callback to close the panel
+ *  isMinimal — hide entirely when minimal mode is active
  */
-export default function SearchPanel({ members, onSelect, isMinimal }) {
+export default function SearchPanel({ members, onSelect, isOpen, onClose, isMinimal }) {
   const { query, setQuery, results, totalCount } = useSearch(members);
   const DISPLAY_LIMIT = 5;
   const visibleResults = results.slice(0, DISPLAY_LIMIT);
   const hiddenCount = totalCount - visibleResults.length;
   const inputRef = useRef(null);
 
-  const isOpen = query.trim().length > 0;
+  // Auto-focus input when panel opens; clear query when closes
+  useEffect(() => {
+    if (isOpen) {
+      // Slight delay so the element is mounted and visible before focus
+      const t = setTimeout(() => inputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
+    } else {
+      setQuery('');
+    }
+  }, [isOpen, setQuery]);
 
   // Close on Escape
   useEffect(() => {
+    if (!isOpen) return;
     const handler = (e) => {
-      if (e.key === 'Escape') setQuery('');
+      if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []); // setQuery is a stable setter ref — no dep needed
+  }, [isOpen, onClose]);
 
   const handleSelect = (person) => {
-    setQuery('');
+    onClose();
     onSelect(person);
   };
 
-  if (isMinimal) return null;
+  if (isMinimal || !isOpen) return null;
+
+  const hasResults = query.trim().length > 0;
 
   return (
-    // search-panel-pos: fixed, centered, responsive position (bottom on mobile / top on desktop)
-    // position:fixed also acts as containing block for absolute children
+    // fixed + translate-x-0 → creates a containing block for the absolute .search-dropdown child
+    // search-panel-pos handles left/bottom/top/width responsive positioning
     <div
-      className="fixed z-40 search-panel-pos"
+      className="fixed z-40 translate-x-0 search-panel-pos"
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Search input bar — always rendered first in DOM */}
-      {/* When open: mobile = rounded-b (dropdown above), desktop = rounded-t (dropdown below) */}
+      {/* Search input bar */}
       <div className={`flex items-center gap-2 bg-[#fffbeb]/95 backdrop-blur-sm border-2 shadow-xl transition-all duration-200 ${
-        isOpen
+        hasResults
           ? 'border-amber-700 rounded-b-xl rounded-t-none sm:rounded-t-xl sm:rounded-b-none'
-          : 'border-amber-900/30 rounded-xl hover:border-amber-900/60'
+          : 'border-amber-700 rounded-xl'
       }`}>
         {/* Search icon */}
         <div className="pl-3 text-amber-700/60 flex-shrink-0">
@@ -67,11 +80,11 @@ export default function SearchPanel({ members, onSelect, isMinimal }) {
           className="flex-1 min-w-0 py-2 pr-1 bg-transparent text-sm font-medium text-amber-900 placeholder:text-amber-900/40 outline-none font-spectral"
         />
 
-        {/* Clear button */}
+        {/* Clear query button */}
         {query && (
           <button
             onClick={() => { setQuery(''); inputRef.current?.focus(); }}
-            className="pr-3 text-amber-700/50 hover:text-amber-900 transition-colors flex-shrink-0"
+            className="text-amber-700/50 hover:text-amber-900 transition-colors flex-shrink-0"
             aria-label="Xóa tìm kiếm"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -79,12 +92,21 @@ export default function SearchPanel({ members, onSelect, isMinimal }) {
             </svg>
           </button>
         )}
+
+        {/* Close panel button */}
+        <button
+          onClick={onClose}
+          className="pr-3 pl-1 text-amber-700/40 hover:text-amber-900 transition-colors flex-shrink-0"
+          aria-label="Đóng tìm kiếm"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+            <path fillRule="evenodd" d="M4.28 4.22a.75.75 0 0 0-1.06 1.06L8.94 11l-5.72 5.72a.75.75 0 1 0 1.06 1.06L10 12.06l5.72 5.72a.75.75 0 1 0 1.06-1.06L11.06 11l5.72-5.72a.75.75 0 0 0-1.06-1.06L10 9.94 4.28 4.22Z" clipRule="evenodd" />
+          </svg>
+        </button>
       </div>
 
-      {/* Results dropdown — absolutely positioned:
-          mobile: bottom:100% (above input bar)
-          desktop: top:100% (below input bar) via .search-dropdown CSS class */}
-      {isOpen && (
+      {/* Results dropdown — mobile: opens upward (bottom:100%), desktop: opens downward (top:100%) */}
+      {hasResults && (
         <div className="search-dropdown bg-[#fffbeb]/95 backdrop-blur-sm border-2 border-amber-700 shadow-2xl overflow-hidden">
           {totalCount === 0 ? (
             <div className="px-4 py-3 text-sm text-amber-900/50 italic font-spectral text-center">
@@ -140,7 +162,9 @@ export default function SearchPanel({ members, onSelect, isMinimal }) {
                       {parentName && (
                         <div className="flex items-center gap-1 min-w-0">
                           <span className="text-[10px] text-amber-900/40 flex-shrink-0">
-                            {isSpouse ? 'Phối ngẫu:' : 'Con của:'}
+                            {isSpouse
+                              ? (person.gender === 'female' ? 'Vợ của:' : 'Chồng của:')
+                              : 'Con của:'}
                           </span>
                           <span className="text-[10px] font-semibold text-amber-900/60 truncate">
                             {parentName}

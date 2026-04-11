@@ -22,6 +22,7 @@ export default function FamilyTree() {
   const [zoomLevel, setZoomLevel] = useState(0.85);
   const [showFromGen15, setShowFromGen15] = useState(true);
   const [isMinimalMode, setIsMinimalMode] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   
   const {
     mergedData,
@@ -263,6 +264,8 @@ export default function FamilyTree() {
       <SearchPanel
         members={mergedData}
         onSelect={handleSearchSelect}
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
         isMinimal={isMinimalMode}
       />
 
@@ -288,9 +291,9 @@ export default function FamilyTree() {
         onSave={handleQuickSave}
       />
 
-      {/* Zoom Indicator — top-left on sm+, bottom-left on mobile */}
-      <div className={`fixed z-30 pointer-events-none select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'} ui-float-left`}>
-        <div className="bg-[#fffbeb]/90 backdrop-blur-sm border border-amber-900/30 px-3 py-1.5 rounded shadow-lg flex items-center gap-3">
+      {/* Zoom Indicator + Search Button — top-left on sm+, bottom-left on mobile */}
+      <div className={`fixed z-30 flex items-center gap-2 transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100'} ui-float-left`}>
+        <div className="pointer-events-none select-none bg-[#fffbeb]/90 backdrop-blur-sm border border-amber-900/30 px-3 py-1.5 rounded shadow-lg flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-tighter">Thu Phóng</span>
             <span className="text-sm font-black text-amber-900 font-spectral">
@@ -303,6 +306,20 @@ export default function FamilyTree() {
             <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Live</span>
           </div>
         </div>
+        {/* Search toggle button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setSearchOpen(prev => !prev); }}
+          className={`flex items-center justify-center w-8 h-8 rounded-full border shadow-lg transition-all duration-200 hover:scale-110 ${
+            searchOpen
+              ? 'bg-amber-900 border-amber-900 text-[#fffbeb]'
+              : 'bg-[#fffbeb]/90 hover:bg-[#fffbeb] border-amber-900/30 hover:border-amber-900/60 text-amber-900/60 hover:text-amber-900'
+          }`}
+          title="Tìm kiếm"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+            <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
+          </svg>
+        </button>
       </div>
 
       {/* Generation Filter Toggle — top-right on sm+, bottom-right on mobile */}

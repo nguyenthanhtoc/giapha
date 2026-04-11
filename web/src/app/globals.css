@@ -43,19 +43,27 @@ body {
   }
 }
 
-/* Search panel: bottom-center on mobile (above other UI), top-center on desktop */
+/*
+ * Search panel overlay: anchored to the left, same side as the Zoom+Search button group (ui-float-left).
+ *
+ * Mobile  (< 640px): button group is at bottom-left.
+ *   - Panel sits ABOVE the button row → bottom: 58px (button ~38px + gap 10px + safe-area).
+ *   - Dropdown opens UPWARD (bottom: 100%).
+ *
+ * Desktop (≥ 640px): button group is at top-left (top: 1.5rem, height ~38px).
+ *   - Panel sits BELOW the button row → top: calc(1.5rem + 38px + 6px) ≈ 4rem.
+ *   - Dropdown opens DOWNWARD (top: 100%).
+ */
 .search-panel-pos {
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100vw - 2rem);
-  max-width: 360px;
-  position: fixed; /* already fixed from Tailwind, but needed for absolute child context */
-  /* Mobile: sit above bottom UI buttons (~48px tall + safe area) */
+  left: calc(env(safe-area-inset-left, 0px) + 1rem);
+  /* right bound: don't overflow screen */
+  width: min(360px, calc(100vw - 2rem));
   bottom: calc(env(safe-area-inset-bottom, 0px) + 58px);
   top: auto;
+  /* no translateX — left-aligned with button group */
 }
 
-/* Mobile: dropdown flips upward (results appear above the input bar) */
+/* Mobile: dropdown opens upward above the input bar */
 .search-dropdown {
   position: absolute;
   bottom: 100%;
@@ -66,11 +74,12 @@ body {
 
 @media (min-width: 640px) {
   .search-panel-pos {
-    /* Desktop: below the header banner (~80px) */
-    top: 5.5rem;
+    /* Below the button group row (1.5rem top + ~38px height + 6px gap) */
+    top: calc(1.5rem + 38px + 6px);
     bottom: auto;
+    left: calc(env(safe-area-inset-left, 0px) + 1rem);
   }
-  /* Desktop: dropdown flows naturally below the input */
+  /* Desktop: dropdown opens downward below the input bar */
   .search-dropdown {
     position: absolute;
     bottom: auto;
