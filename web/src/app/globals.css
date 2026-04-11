@@ -42,3 +42,39 @@ body {
     bottom: auto;
   }
 }
+
+/* Search panel: bottom-center on mobile (above other UI), top-center on desktop */
+.search-panel-pos {
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100vw - 2rem);
+  max-width: 360px;
+  position: fixed; /* already fixed from Tailwind, but needed for absolute child context */
+  /* Mobile: sit above bottom UI buttons (~48px tall + safe area) */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 58px);
+  top: auto;
+}
+
+/* Mobile: dropdown flips upward (results appear above the input bar) */
+.search-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+@media (min-width: 640px) {
+  .search-panel-pos {
+    /* Desktop: below the header banner (~80px) */
+    top: 5.5rem;
+    bottom: auto;
+  }
+  /* Desktop: dropdown flows naturally below the input */
+  .search-dropdown {
+    position: absolute;
+    bottom: auto;
+    top: 100%;
+    border-radius: 0 0 0.75rem 0.75rem;
+  }
+}

@@ -6,6 +6,7 @@ import { useFamilyData } from '@/hooks/useFamilyData';
 import { drawFamilyTree } from '@/utils/treeLayout';
 import InfoPanel from './tree/InfoPanel';
 import QuickAddForm from './tree/QuickAddForm';
+import SearchPanel from './tree/SearchPanel';
 
 export default function FamilyTree() {
   const svgRef = useRef(null);
@@ -136,6 +137,37 @@ export default function FamilyTree() {
     }
   }, [mergedData, updatingIds, isAdmin, selectedPerson, focusId, collapsedIds, showFromGen15]);
 
+  const handleSearchSelect = (person) => {
+    // If the selected person is a spouse, navigate to the main spouse node
+    // so the tree can zoom to them (spouses are rendered on main nodes)
+    let target = person;
+    if (person.spouseId) {
+      const main = mergedData.find(m => m.id === person.spouseId);
+      if (main) target = main;
+    }
+
+    // If the node would be hidden by the gen filter, disable it
+    if (showFromGen15) {
+      const getDepth = (node) => {
+        let d = 0, n = node;
+        const mainNodes = mergedData.filter(m => !m.spouseId);
+        while (n.parentId) { n = mainNodes.find(m => m.id === n.parentId); if (!n) break; d++; }
+        return d;
+      };
+      if (getDepth(target) < 4) {
+        setShowFromGen15(false);
+      }
+    }
+
+    // Force zoom even if re-selecting the same node by resetting the zoom tracker
+    if (svgRef.current) {
+      svgRef.current.__lastSelectedId = null;
+    }
+
+    setSelectedPerson(target);
+    setShowDetails(false);
+  };
+
   const handleAdminUpdate = async (id, name, born, death, address, alias, isAlive, dacVi, gender) => {
     await handleUpdate(id, name, born, death, address, alias, isAlive, dacVi, gender);
   };
@@ -227,6 +259,12 @@ export default function FamilyTree() {
       </div>
 
       <svg ref={svgRef} className="w-full h-full cursor-grab active:cursor-grabbing touch-none" />
+
+      <SearchPanel
+        members={mergedData}
+        onSelect={handleSearchSelect}
+        isMinimal={isMinimalMode}
+      />
 
       <InfoPanel
         selectedPerson={showDetails && !isMinimalMode ? selectedPerson : null}
