@@ -67,8 +67,15 @@ export const renderNode = ({
   const isSelected = person.id === selectedId;
   const isRelated = selectedId && relatedIds.has(person.id);
   const isFaded = selectedId && !isSelected && !isRelated;
-  const nodeIsAlive = person.isAlive || personSpouses.some(s => s.isAlive);
-  const personIsDead = person.isAlive === false || (person.isAlive == null && !!parseYear(person.death));
+
+  // Helper: is a member considered dead?
+  const isDead = (m) => m.isAlive === false || (m.isAlive == null && !!parseYear(m.death));
+
+  // Node is alive if the main person OR at least one spouse is still alive
+  // Node is dead only when ALL members (main + spouses) are dead
+  const allMembers = [person, ...personSpouses];
+  const nodeIsAlive = allMembers.some(m => !isDead(m));
+  const personIsDead = isDead(person);
 
   const nodeGroup = gNode.append('g')
     .attr('class', `person-node ${isUpdating ? 'animate-pulse' : ''}`)
@@ -121,11 +128,11 @@ export const renderNode = ({
     return '#fffbeb';
   })();
 
-  // Border: blue for male, pink for female (gender-based); dimmed 50% opacity when dead
+  // Border: blue/pink (gender) when alive; brown when entire node is dead
   const strokeColor = (() => {
     if (isSpecialRoot) return nodeIsAlive ? '#0369a1' : '#92400e';
     if (isSelected) return '#dc2626';
-    if (personIsDead) return person.gender === 'male' ? '#93b4f5' : '#f0a8cf';
+    if (!nodeIsAlive) return '#92400e';
     return person.gender === 'male' ? '#2563eb' : '#db2777';
   })();
 
@@ -141,7 +148,7 @@ export const renderNode = ({
     .attr('stroke-width', strokeWidth)
     .attr('filter', isSelected ? `url(#${selectedFilterId})` : (isUpdating ? null : `url(#${filterId})`));
 
-  // Top accent bar — blue for male, pink for female (gender-based); dimmed 50% opacity when dead
+  // Top accent bar — blue for male, pink for female (gender-based); dimmed when dead
   if (!isSpecialRoot) {
     const accentColor = personIsDead
       ? (person.gender === 'male' ? '#93b4f5' : '#f0a8cf')
