@@ -237,14 +237,16 @@ const renderActionButtons = ({ nodeGroup, isSelected, isUpdating, isAdmin, final
             const canMoveLeft = idx > 0;
             const canMoveRight = idx < siblings.length - 1;
 
+            // Both move buttons sit below the node, centered, spaced 26px apart
+            const moveY = finalNodeHeight / 2 + 34;
             if (canMoveLeft) {
-                const moveLeftBtn = nodeGroup.append('g').attr('class', 'move-btn').attr('transform', `translate(${-finalNodeWidth / 2 - 14}, ${finalNodeHeight / 2 + 12})`).style('cursor', 'pointer').on('click', (e) => { e.stopPropagation(); onMoveNode(person.id, 'left'); });
+                const moveLeftBtn = nodeGroup.append('g').attr('class', 'move-btn').attr('transform', `translate(-13, ${moveY})`).style('cursor', 'pointer').on('click', (e) => { e.stopPropagation(); onMoveNode(person.id, 'left'); });
                 moveLeftBtn.append('circle').attr('r', 10).attr('fill', '#0369a1').attr('stroke', '#fff').attr('stroke-width', 1.5);
                 moveLeftBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '13px').attr('font-weight', 'bold').text('◀');
             }
 
             if (canMoveRight) {
-                const moveRightBtn = nodeGroup.append('g').attr('class', 'move-btn').attr('transform', `translate(${finalNodeWidth / 2 + 36}, ${finalNodeHeight / 2 + 12})`).style('cursor', 'pointer').on('click', (e) => { e.stopPropagation(); onMoveNode(person.id, 'right'); });
+                const moveRightBtn = nodeGroup.append('g').attr('class', 'move-btn').attr('transform', `translate(13, ${moveY})`).style('cursor', 'pointer').on('click', (e) => { e.stopPropagation(); onMoveNode(person.id, 'right'); });
                 moveRightBtn.append('circle').attr('r', 10).attr('fill', '#0369a1').attr('stroke', '#fff').attr('stroke-width', 1.5);
                 moveRightBtn.append('text').attr('dy', 4).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', '13px').attr('font-weight', 'bold').text('▶');
             }
