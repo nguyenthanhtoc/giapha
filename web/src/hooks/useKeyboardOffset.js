@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Detects the on-screen keyboard height using the visualViewport API.
- * Returns the number of pixels the keyboard is pushing up from the bottom.
+ * Tracks visualViewport state to handle on-screen keyboard on mobile.
  *
- * On desktop or when keyboard is hidden, returns 0.
+ * Returns:
+ *  - keyboardOffset: pixels the keyboard pushes up from the bottom (use to lift bottom-anchored panels)
+ *  - viewportScrollTop: pixels the visual viewport has scrolled down (use to pin top-anchored elements)
  */
 export function useKeyboardOffset() {
-  const [offset, setOffset] = useState(0);
+  const [state, setState] = useState({ keyboardOffset: 0, viewportScrollTop: 0 });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -17,9 +18,9 @@ export function useKeyboardOffset() {
     if (!vv) return;
 
     const update = () => {
-      // keyboard height = layout viewport bottom - visual viewport bottom
-      const keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
-      setOffset(Math.max(0, keyboardHeight));
+      const keyboardOffset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      const viewportScrollTop = vv.offsetTop;
+      setState({ keyboardOffset, viewportScrollTop });
     };
 
     vv.addEventListener('resize', update);
@@ -32,5 +33,5 @@ export function useKeyboardOffset() {
     };
   }, []);
 
-  return offset;
+  return state;
 }

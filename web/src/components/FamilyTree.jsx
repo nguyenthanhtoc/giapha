@@ -7,6 +7,7 @@ import { drawFamilyTree } from '@/utils/treeLayout';
 import InfoPanel from './tree/InfoPanel';
 import QuickAddForm from './tree/QuickAddForm';
 import SearchPanel from './tree/SearchPanel';
+import { useKeyboardOffset } from '@/hooks/useKeyboardOffset';
 
 export default function FamilyTree() {
   const svgRef = useRef(null);
@@ -23,6 +24,7 @@ export default function FamilyTree() {
   const [showFromGen15, setShowFromGen15] = useState(true);
   const [isMinimalMode, setIsMinimalMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { viewportScrollTop } = useKeyboardOffset();
   
   const {
     mergedData,
@@ -244,7 +246,7 @@ export default function FamilyTree() {
       )}
 
       {/* Decorative Header Banner */}
-      <div className={`fixed z-30 select-none transition-all duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-none'}`} style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)', left: '50%', transform: 'translateX(-50%)' }}>
+      <div className={`fixed z-30 select-none transition-opacity duration-300 ${isMinimalMode ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-none'}`} style={{ top: `calc(env(safe-area-inset-top, 0px) + 0.75rem + ${viewportScrollTop}px)`, left: '50%', transform: 'translateX(-50%)' }}>
         <div className="relative bg-[#fffbeb] border border-amber-800 sm:border-2 px-4 sm:px-10 py-2 sm:py-3 rounded-md shadow-2xl flex items-center justify-center min-w-[200px] sm:min-w-[300px]">
           <div className="absolute -left-1 sm:-left-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />
           <div className="absolute -right-1 sm:-right-2 top-1/2 -translate-y-1/2 w-2 sm:w-3 h-[110%] bg-amber-900 rounded-full shadow-md" />

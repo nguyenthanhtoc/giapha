@@ -21,7 +21,7 @@ export default function SearchPanel({ members, onSelect, isOpen, onClose, isMini
   const visibleResults = results.slice(0, DISPLAY_LIMIT);
   const hiddenCount = totalCount - visibleResults.length;
   const inputRef = useRef(null);
-  const keyboardOffset = useKeyboardOffset();
+  const { keyboardOffset } = useKeyboardOffset();
 
   // Auto-focus input when panel opens; clear query when closes
   useEffect(() => {

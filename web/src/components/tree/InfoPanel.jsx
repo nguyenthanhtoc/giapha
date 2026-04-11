@@ -27,7 +27,7 @@ export default function InfoPanel({
   const [editSpouseStates, setEditSpouseStates] = useState([]); // Array of spouse objects for editing
   
   const [isSaving, setIsSaving] = useState(false);
-  const keyboardOffset = useKeyboardOffset();
+  const { keyboardOffset } = useKeyboardOffset();
 
   const spouses = allMembers?.filter(m => m.spouseId === selectedPerson?.id) || [];
 
